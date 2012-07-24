@@ -1,0 +1,11 @@
+name = Menu Site Map
+description = Display a site map generated from a menu.
+core = 6.x
+dependencies[] = site_map
+
+; Information added by drupal.org packaging script on 2009-11-30
+version = "6.x-1.0-beta4"
+core = "6.x"
+project = "menu_site_map"
+datestamp = "1259596602"
+

@@ -1,0 +1,31 @@
+CHANGELOG for Menu Site Map for Drupal 6
+
+Menu Site Map beta4
+  Bugs fixed:
+    * #605836 - Show access to Select links
+    * #629266 - Error in integration with Site Map module (actually array
+                bounds checking problem) 
+    * #605744 - List hierarchy is broken when Display style: Nested Lists and
+                Move second-level items without entries to the end? are both selec
+
+Menu Site Map beta3
+  Bugs fixed:
+    * #8 "Move second-level items without entries to the end" setting doesn't work
+  Other changes:
+    * Added README.txt file to provide basic documentation for the module.
+    * Added LICENSE.txt to show this module is GPLed.
+
+Menu Site Map beta2
+  Bugs fixed:
+    * #7 by mairav Fatal error: Call to undefined function 
+
+Menu Site Map beta1 
+  Bugs fixed:
+    * #1 by mairav Home page link set to "<front>"
+    * #3 by mairav Menu items not translated
+    * #4 by mairav CSS issue when them functions output nested lists
+    * #5 by mairav Duplicate text in links for nodes with path alias
+
+  Other changes:
+    * I made it possible to choose between either the header/div/list output (default) or the nested list output (which is similar to the way that the normal Site Map module renders menus with menu_tree_output().  Please select the desired output style with the "Display Style* setting at Site Configuration -> Site Map -> Menu Site Map (/admin/settings/sitemap/menu_sitemap/)
+    * Instead of rolling my own links, I now use Drupal's l() function.  This seems to fix a number of the bugs. 

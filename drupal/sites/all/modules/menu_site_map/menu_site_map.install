@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * Implementation of hook_schema().
+ */
+function menu_site_map_schema() { 
+  $schema['menu_site_map_links'] = array(
+    'description' => t('Table for storing alterations to menu items when displayed in the site map.'),
+    'fields' => array(
+      'smmlid' => array(
+        'description' => t('The primary identifier for a site map menu link.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE),
+      'site_map_name' => array(
+        'description' => t('Identifier for site map.  Currently not used, but would be if multiple site maps were supported.'),
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => ''),
+      'mlid' => array(
+        'description' => t('The identifier of the menu link in the menu_links table.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0),
+      'menu_name' => array(
+        'description' => t('Identifier for the menu from which the link in the site map originated.'),
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => ''),
+      'included' => array(
+        'description' => t('Is the link from the menu included in the site map or not?'),
+        'type' =>  'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0),
+      ),
+      'primary key' => array('smmlid'),
+    );
+
+  return $schema;  
+}
+
+    
+/**
+ * Implementation of hook_install().
+ */
+function menu_site_map_install() {
+  drupal_install_schema('menu_site_map');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function menu_site_map_uninstall() {
+  drupal_uninstall_schema('menu_site_map');
+  variable_del('menu_site_map_menus');
+  variable_del('menu_site_map_menu_depth');
+  variable_del('menu_site_map_move_second_level_leaves');
+}

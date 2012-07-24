@@ -1,0 +1,45 @@
+<?php
+
+ /**
+  * @file
+  * Auto-index: Automatically indexes node content on update.
+  * 
+  * Uses Drupal's search module to automatically index updated nodes as and when they are updated.
+  * This means that a user can update node content and that content is immediately searchable,
+  * by users of the site.
+  * 
+  * @author Steve Osguthorpe <steve@futurate.com>
+  */
+
+function auto_index_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+
+  // Only index if the search module is activated.
+  if (module_exists('search')) {
+
+    switch ($op) {
+      case "delete" :
+
+        // Update search totals to reflect deleted node content.
+        search_update_totals();
+        break;
+
+      case "update" :
+      case "insert" :
+
+        // Ensure we force the cache to be updated so latest content is indexed.
+        $node_obj = node_load(
+
+          $node->nid,  // The node id.
+          NULL,        // Default to current version.
+          TRUE         // Flag that the cache should be updated to ensure the latest content is indexed.
+        );
+
+        // Do the indexing of this node only.
+        _node_index_node($node_obj);
+
+        // Update search totals.
+        search_update_totals();
+        break;
+    }
+  }
+}

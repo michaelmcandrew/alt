@@ -1,0 +1,33 @@
+name = ALT Website Theme
+description = A Futurate custom theme for the ALT Website
+core = 6.x
+engine = phptemplate
+
+regions[header] = Site header
+
+regions[pre_tabs] = Pre tabs
+regions[pre_content] = Pre primary content
+regions[post_content] = Post primary content
+regions[post_content_2_col_1] = Post primary 2 column content col 1
+regions[post_content_2_col_2] = Post primary 2 column content col 2
+
+regions[secondary] = Secondary content area
+
+regions[tertiary] = Tertiary content area
+
+regions[left] = Left
+
+regions[pre_footer] = Pre site footer
+regions[footer] = Site footer
+
+stylesheets[all][] = css/reset.css
+stylesheets[all][] = css/960.css
+stylesheets[all][] = css/text.css
+stylesheets[all][] = css/common.less
+stylesheets[all][] = css/altc_theme.less
+stylesheets[all][] = css/ckeditor_templates.css
+
+scripts[] = js/jquery.equalheights.js
+
+features[] = primary_links
+features[] = slogan

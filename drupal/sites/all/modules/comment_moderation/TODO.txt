@@ -1,0 +1,27 @@
+= Comment Moderation module TODO items
+Dag Wieers <dag@wieers.com>
+
+== Ideas
+- Create a new location at admin/content/comment/moderation
+- Include a 'moderate' link per comment in the Comment approval queue
+  (admin/content/comment/approval)
+- The comment view should display:
+  * Comment author/contact info
+  * Comment content
+  * List of links in content (best indicator for spam)
+  * List of actions:
+    - Approve
+    - Approve and reply
+    - Edit
+    - Delete but don't report to Mollom
+    - Delete and report as spam or unsolicited advertising
+    - Delete and report as obscene, violent or profane content
+    - Delete and report as low-quality content or writing
+    - Delete and report as unwanted, taunting or off-topic content
+    - Skip to next comment in queue
+- Automatically move to the next message in the queue
+- Add a comment_moderation_block to show the N number of most recent comments
+  (by default shown to people that have permissions to approve comments)
+
+
+// vim: set syntax=asciidoc:

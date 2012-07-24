@@ -1,0 +1,11 @@
+name = "Empty Page"
+description = "A simple empty page solution. Assists in creating empty menu callbacks, mostly used for pages that only consist of blocks."
+core = 6.x
+package = "Custom"
+
+; Information added by drupal.org packaging script on 2010-05-07
+version = "6.x-1.0"
+core = "6.x"
+project = "empty_page"
+datestamp = "1273272007"
+

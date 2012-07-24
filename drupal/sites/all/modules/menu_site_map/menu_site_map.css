@@ -1,0 +1,65 @@
+/* $Id: menu_site_map.css,v 1.1.2.1 2009/11/30 15:50:05 ghing Exp $ */
+
+/**
+ * @file Stylesheet for XHMTL output by the Menu Site Map module.
+ */
+
+.menu-site-map .item.level-0 {
+  clear: both;
+  border-bottom: solid thin; 
+  margin-bottom: 10px;
+}
+
+.menu-site-map.menu-site-map-default li.item {
+  width: 100%;
+
+  margin-left: 0;
+
+  /* Eliminate Drupal's default indendation */
+  padding-left: 0;
+
+  /* Floating doesn't inherit properly in IE6, so set it explicitely. */
+  float: none; 
+
+  /* Eliminate Drupal's default bullets */
+  list-style-type: none;
+  list-style-image: none;
+  background: none;
+}
+
+.menu-site-map.menu-site-map-default .item.level-1 {
+  font-weight: bold;
+}
+
+.menu-site-map .container {
+  /* IE6 was drawing borders under container objects for some reason. */
+  border-bottom-style: none;
+}
+
+
+/* 2 column layout for first level menus */
+.menu-site-map .container.level-1,
+.menu-site-map .item.level-1.leaf {
+  width: 49%; /* Should be 50%, but IE6 seems to insert some pixels */
+  float: left;
+}
+
+.menu-site-map ul.container.level-1 {
+  float: none;
+}
+
+.menu-site-map ul.container {
+  width: 80% !important;
+
+  margin-bottom: 5px;
+  margin-left: 10px;
+}
+
+.menu-site-map .container.level-1 .item.level-1 {
+  /* Floating doesn't inherit properly in IE6, so set it explicitely. */
+  float: none; 
+
+  margin-top: 0;
+}
+
+

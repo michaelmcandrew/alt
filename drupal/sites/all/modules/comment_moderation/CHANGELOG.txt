@@ -1,0 +1,32 @@
+* Thu Apr 16 2009 David Stosik - 1.x-dev
+- Include a 'moderate' link per comment in the Comment approval queue
+- Enhance template file, variables preprocesses and translatability.
+
+* Wed Apr 15 2009 David Stosik - 1.x-dev
+- Developped "reply" feature, where the comment is published, then the reply
+form displayed, and when submitted, goes to next pending comment
+- Renamed some methods, from comment_moderate* to comment_moderation*
+- Fixed destination when there are no remaining comments to moderate
+- Keep in static variable next and previous pending comments
+- Enhanced tpl.php file a little bit
+
+* Fri Apr 03 2009 Dag Wieers <dag@wieers.com> - 1.x-dev
+- Added stale previous and next buttons when at begin or end of queue
+
+* Sun Mar 15 2009 Dag Wieers <dag@wieers.com> - 1.x-dev
+- Remove dependency to mollom (David Stosik)
+- "X more queued" negative (David Stosik)
+- Error attempting to access Comment Moderation (David Stosik)
+
+* Tue Feb 03 2009 Dag Wieers <dag@wieers.com> - 1.x-dev
+- Added number of comments left in queue tp block
+- Make block configure work
+- Allow to configure number of comments shown in block (defaults to 5)
+- Added navigation buttons to browse through approval queue
+- Make edit and delete button return to next comment in queue
+- Added 'report to mollom' button (until we have each action included)
+- Added node title in breadcrumbs
+- Show comment info (author, email, homepage)
+
+* Sun Feb 01 2009 Dag Wieers <dag@wieers.com> - 1.x-dev
+- Initial release.

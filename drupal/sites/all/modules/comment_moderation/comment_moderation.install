@@ -1,0 +1,10 @@
+<?php
+// $Id: comment_moderation.install,v 1.1.2.1 2009/03/26 11:09:38 davidstosik Exp $
+
+/**
+ * Implementation of hook_enable().
+ */
+function comment_moderation_enable() {
+  drupal_set_message(t('Comment moderation module successfully installed.'));
+}
+

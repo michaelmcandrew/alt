@@ -1,0 +1,388 @@
+<?php
+// $Id: comment_moderation.module,v 1.1.2.10 2009/04/16 15:25:37 davidstosik Exp $
+
+/**
+ * @file
+ * Facilitates comment moderation and reporting to Mollom.
+ */
+
+// Add a helpful message to the comment_moderation configuration page
+function comment_moderation_help($path, $arg) {
+  switch ($path) {
+    case 'admin/settings/comment_moderation':
+      return '<p>'. t('comment_moderation_settings_help') .'</p>';
+    case 'admin/content/comment/moderation':
+      return '<p>'. t('comment_moderation_content_help') .'</p>';
+  }
+}
+
+function comment_moderation_theme() {
+  return array(
+    'comment_moderation_block' => array(
+      'arguments' => array(),
+    ),
+    'comment_moderation' => array(
+      'template' => 'comment_moderation',
+      'arguments' => array('comment' => NULL, 'node' => NULL, 'links' => array(), 'navlinks' => array()),
+    ),
+    'comment_moderation_view' => array(
+      'arguments' => array('comment' => NULL, 'node' => NULL, 'links' => array(), 'navlinks' => array()),
+    ),
+  );
+}
+
+// Register the module's configuration page to the menu
+function comment_moderation_menu() {
+/*  $items['admin/content/comment/moderation'] = array(
+    'title' => 'Moderation queue',
+//    'page callback' => 'comment_moderation_overview',
+    'page arguments' => array('moderation'),
+    'access arguments' => array('administer comments'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'comment_moderation.admin.inc',
+  );
+  */
+  $items['admin/settings/comment_moderation'] = array(
+    'title' => 'Comment moderation',
+    'description' => 'Configure advanced comment moderation.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('comment_moderation_admin_settings'),
+    'access arguments' => array('administer comments'),
+  );
+  $items['comment/moderate/%comment'] = array(
+    'title' => 'Moderate comment',
+    'page callback' => 'comment_moderation',
+    'page arguments' => array(2),
+    'access arguments' => array('administer comments'),
+    'type' => MENU_CALLBACK,
+//    'file' => 'comment_moderation.pages.inc',
+  );
+  $items['comment/publish/%comment'] = array(
+    'title' => 'Publish comment',
+    'page callback' => 'comment_moderation_publish',
+    'page arguments' => array(2),
+    'access arguments' => array('administer comments'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['comment_moderation/reply/%node/%comment'] = array(
+    'title' => 'Reply to comment',
+    'page callback' => 'comment_moderation_reply',
+    'page arguments' => array(2, 3),
+    'access arguments' => array('administer comments'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+// Add the various permissions the module uses
+//function comment_moderation_perm() {
+//  return array('administer disclaimers', 'disable register disclaimer', 'disable comment disclaimer');
+//}
+
+function comment_moderation_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks[0]['info'] = t('Comment moderation');
+      $blocks[0]['cache'] = BLOCK_NO_CACHE;
+      return $blocks;
+
+    case 'configure':
+      //$numbers = array('0' => t('Disabled')) + drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 40));
+      $form['comment_moderation_block_num'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Number of comments to display'),
+        '#description' => t('How many unpublished comments to display in moderation block.'),
+        '#size' => 3,
+        '#default_value' => variable_get('comment_moderation_block_num', 5),
+        '#element_validate' => array('comment_moderation_block_num_validate'),
+      );
+      return $form;
+
+    case 'save':
+      variable_set('comment_moderation_block_num', $edit['comment_moderation_block_num']);
+      break;
+
+    case 'view':
+      $block = array();
+      if (user_access('administer comments')) {
+        $block['subject'] = t('Comment moderation');
+        $block['content'] = theme('comment_moderation_block');
+      }
+      return $block;
+      break;
+    default:
+      break;
+  }
+}
+
+function comment_moderation_block_num_validate($element, &$form_state) {
+  if (!preg_match('/^\d+$/', $element['#value']) || $element['#value'] < 1) {
+    form_error($element, t('Number of comments to display should be a striclty positive integer.'));
+  }
+}
+
+function comment_moderation_count() {
+  $count = db_result(db_query('SELECT count(1) FROM {comments} c INNER JOIN {node} n ON n.nid = c.nid WHERE n.status = 1 AND c.status = %d ORDER BY c.timestamp DESC', COMMENT_NOT_PUBLISHED));
+  return $count;
+}
+
+function comment_moderation_get_recent($number = 5) {
+  $comments = array();
+  // From among the comments on the nodes selected in the first query,
+  // find the $number most recent comments.
+  $result = db_query_range('SELECT c.nid, c.subject, c.cid, c.timestamp FROM {comments} c INNER JOIN {node} n ON n.nid = c.nid WHERE n.status = 1 AND c.status = %d ORDER BY c.timestamp DESC', COMMENT_NOT_PUBLISHED, 0, $number);
+  while ($comment = db_fetch_object($result)) {
+    $comments[] = $comment;
+  }
+
+  return $comments;
+}
+
+function comment_moderation_get_prev($comment) {
+  static $cache_prev = array();
+  if ($cache_prev[$comment->cid]) {
+    $result = $cache_prev[$comment->cid];
+  }
+  else {
+    $result = db_fetch_object(db_query_range('SELECT c.cid FROM {comments} c INNER JOIN {node} n ON n.nid = c.nid WHERE n.status = 1 AND c.status = %d AND c.timestamp > %d ORDER BY c.timestamp ASC', COMMENT_NOT_PUBLISHED, $comment->timestamp, 0, 1));
+    $cache_prev[$comment->cid] = $result;
+  }
+  return $result;
+}
+
+function comment_moderation_get_next($comment) {
+  static $cache_next = array();
+  if ($cache_next[$comment->cid]) {
+    $result = $cache_next[$comment->cid];
+  }
+  else {
+    $result = db_fetch_object(db_query_range('SELECT c.cid FROM {comments} c INNER JOIN {node} n ON n.nid = c.nid WHERE n.status = 1 AND c.status = %d AND c.timestamp < %d ORDER BY c.timestamp DESC', COMMENT_NOT_PUBLISHED, $comment->timestamp, 0, 1));
+    $cache_next[$comment->cid] = $result;
+  }
+  return $result;
+}
+
+function comment_moderation($comment) {
+  $output = '';
+
+  if (user_access('administer comments')) {
+    if ($comment) {
+      $links = array();
+      $navlinks = array();
+      $node = node_load($comment->nid);
+      $prev = comment_moderation_get_prev($comment);
+      $next = comment_moderation_get_next($comment);
+
+      $next_destination = comment_moderation_get_next_destination($comment);
+
+      $links['comment_publish'] = array(
+        'title' => t('publish'),
+        'href' => 'comment/publish/'. $comment->cid,
+        'query' => array('destination' => $next_destination),
+      );
+      if ($node->comment == 2) {
+        $links['comment_reply'] = array(
+          'title' => t('reply'),
+          'href' => 'comment/publish/'. $comment->cid,
+          'query' => array('destination' => drupal_urlencode('comment_moderation/reply/'. $node->nid .'/'. $comment->cid)),
+        );
+      }
+      $links['comment_edit'] = array(
+        'title' => t('edit'),
+        'href' => 'comment/edit/'. $comment->cid,
+        'query' => array('destination' => drupal_urlencode('comment/moderate/'. $comment->cid)),
+      );
+      $links['comment_delete'] = array(
+        'title' => t('delete'),
+        'href' => 'comment/delete/'. $comment->cid,
+        'query' => array('destination' => $next_destination),
+      );
+      if (module_exists('mollom')) {
+        $links['comment_mollom'] = array(
+          'title' => t('report spam'),
+          'href' => 'mollom/comment/'. $comment->cid,
+        'query' => array('destination' => $next_destination),
+        );
+/* @TODO: Mollom stuff        $links['comment_spam'] = array(
+          'title' => t('as spam'),
+          'href' => "mollom/comment/$comment->cid",
+        );
+        $links['comment_obscene'] = array(
+          'title' => t('as obscene'),
+          'href' => "mollom/comment/$comment->cid",
+        );
+        $links['comment_lowquality'] = array(
+          'title' => t('as low quality'),
+          'href' => "mollom/comment/$comment->cid",
+        );
+        $links['comment_offtopic'] = array(
+          'title' => t('as offtopic'),
+          'href' => "mollom/comment/$comment->cid"
+        );*/
+      }
+      $navlinks['comment_previous'] = array(
+        'title' => t('‹ previous'),
+      );
+      $navlinks['comment_next'] = array(
+        'title' => t('next ›'),
+      );
+      
+      if ($prev) {
+        $navlinks['comment_previous']['href'] = "comment/moderate/$prev->cid";
+      }
+      if ($next) {
+        $navlinks['comment_next']['href'] = "comment/moderate/$next->cid";
+      }
+
+      // Set the breadcrumb trail.
+      drupal_set_breadcrumb(array(
+        l(t('Home'), NULL), 
+        l($node->title, "node/$node->nid"),
+//        l($comment->subject, 'node/'. $comment->nid, array('fragment' => "comment-$comment->cid")),
+      ));
+      $comment->name = $comment->uid ? $comment->registered_name : $comment->name;
+      $output .= theme('comment_moderation_view', $comment, $node, $links, $navlinks);
+    }
+    else {
+      drupal_set_message(t('The comment you are moderating does not exist.'), 'error');
+      drupal_goto('admin/content/comment/approval');
+    }
+  }
+  else {
+    drupal_set_message(t('You are not authorized to moderate comments.'), 'error');
+    drupal_goto("node/$comment->nid");
+  }
+
+  return $output;
+}
+
+function comment_moderation_publish($comment) {
+  // perform the update action, then refresh node statistics
+  $query = 'UPDATE {comments} SET status = 0 WHERE cid = %d';
+  db_query($query, $comment->cid);
+  _comment_update_node_statistics($comment->nid);
+  // Allow modules to respond to the updating of a comment.
+  comment_invoke_comment($comment, 'publish');
+  // Add an entry to the watchdog log.
+  watchdog('content', 'Comment: updated %subject.', array('%subject' => $comment->subject), WATCHDOG_NOTICE, l(t('view'), 'node/'. $comment->nid, array('fragment' => 'comment-'. $comment->cid)));
+  drupal_set_message(t('The comment has been published.'));
+  drupal_goto($_GET['destination']);
+}
+
+function comment_moderation_reply($node, $comment) {
+  $next_destination = comment_moderation_get_next_destination($comment);
+  drupal_goto('comment/reply/'. $node->nid .'/'. $comment->cid, 'destination='. $next_destination, NULL);
+}
+
+function comment_moderation_get_next_destination($comment) {
+  $prev = comment_moderation_get_prev($comment);
+  $next = comment_moderation_get_next($comment);
+  if ($next) {
+    $next_destination = drupal_urlencode('comment/moderate/'. $next->cid);
+  }
+  else if ($prev) {
+    $next_destination = drupal_urlencode('comment/moderate/'. $prev->cid);
+  }
+  else {
+    $next_destination = drupal_urlencode('admin/content/comment');
+  }
+  return $next_destination;
+}
+
+function comment_moderation_admin_settings() {
+  $form = array();
+  
+  return system_settings_form($form);
+}
+
+function comment_moderation_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'comment_admin_overview') {
+    if ($form['#parameters'][2] == "approval") {
+      foreach ($form['operations'] as $cid => $operation) {
+        $form['operations'][$cid]['#value'] .= ', '. l(t('moderate'), 'comment/moderate/'. $cid);
+      }
+    }
+  }
+}
+
+function theme_comment_moderation_block() {
+  $output = '';
+  $items = array();
+  $count = comment_moderation_count();
+  if ($count > 0) {
+    $number = variable_get('comment_moderation_block_num', 5);
+    foreach (comment_moderation_get_recent($number) as $comment) {
+      $items[] = l($comment->subject, 'comment/moderate/'. $comment->cid);
+    }
+    if ($items) {
+      $output .= theme('item_list', $items);
+    }
+    if ($count > $number) {
+      $text = t("@number more queued", array('@number' => $count - $number));
+    }
+    $output .= '<div class="more-link">'. l($text, 'admin/content/comment/approval') .'</div>';
+  }
+  return $output;
+}
+
+function template_preprocess_comment_moderation(&$variables) {
+  $comment = $variables['comment'];
+  $node = $variables['node'];
+  if ($comment->mail) {
+    $variables['email'] = l($comment->mail, 'mailto:'. $comment->mail);
+  }
+  else if ($comment->uid) {
+    $author = user_load(array('uid' => $comment->uid));
+    if ($author->mail) {
+      $variables['email'] = l($author->mail, 'mailto:'. $author->mail);
+    }
+  }    
+  $variables['homepage']  = $comment->homepage ? l($comment->homepage, $comment->homepage, array('attributes' => array('target' => '_blank'))) : '';
+  $variables['author']    = theme('username', $comment);
+  $variables['content']   = $comment->comment;
+  $variables['date']      = format_date($comment->timestamp);
+  $variables['navlinks']  = isset($variables['navlinks']) ? theme('links', $variables['navlinks']) : '';
+  $variables['links']     = isset($variables['links']) ? theme('links', $variables['links']) : '';
+  $variables['new']       = $comment->new ? t('new') : '';
+  $variables['picture']   = theme_get_setting('toggle_comment_user_picture') ? theme('user_picture', $comment) : '';
+  $variables['signature'] = $comment->signature;
+  $variables['submitted'] = theme('comment_submitted', $comment);
+  $variables['title']     = l($comment->subject, 'node/'. $comment->nid, array('fragment' => "comment-$comment->cid"));
+  $options = array(
+    'query' => array(
+      'fuseaction' => 'ipaddress.results',
+      'submit' => 'Search',
+      'host' => $comment->hostname,
+    ),
+  );
+  $variables['ip_whois']  = l($comment->hostname, 'http://tools.whois.net/', $options);
+  $variables['template_files'][] = 'comment-'. $node->type;
+  // set status to a string representation of comment->status.
+  if (isset($comment->preview)) {
+    $variables['status']  = 'comment-preview';
+  }
+  else {
+    $variables['status']  = ($comment->status == COMMENT_NOT_PUBLISHED) ? 'comment-unpublished' : 'comment-published';
+  }
+}
+
+function theme_comment_moderation_view($comment, $node, $links = array(), $navlinks) {
+  $output = '';
+
+  $output .= "<a id=\"comment-$comment->cid\"></a>\n";
+
+  // Switch to folded/unfolded view of the comment
+  $comment->comment = check_markup($comment->comment, $comment->format, FALSE);
+
+  comment_invoke_comment($comment, 'moderate');
+
+  $output .= theme('comment_moderation', $comment, $node, $links, $navlinks);
+
+  return $output;
+}
+
+function comment_load($cid) {
+  $comment = db_fetch_object(db_query('SELECT c.*, u.uid, u.name AS registered_name, u.signature, u.picture, u.data FROM {comments} c INNER JOIN {users} u ON c.uid = u.uid WHERE c.cid = %d', $cid));
+  $comment = drupal_unpack($comment);
+  return $comment;
+}

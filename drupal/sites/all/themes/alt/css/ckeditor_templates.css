@@ -1,0 +1,13 @@
+.template_two_col {
+	clear: both;
+	float: left;
+	width: 99%;
+}
+.template_two_col .template_col1 {
+	float: left;
+	width: 48%;
+}
+.template_two_col .template_col2 {
+	float: right;
+	width: 48%;
+}

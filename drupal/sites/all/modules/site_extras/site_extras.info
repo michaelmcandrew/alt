@@ -1,0 +1,6 @@
+; $Id$
+name = Site extras
+description = Site specific tweaks and enhancements.
+core = 6.x
+
+package = "Futurate"

@@ -1,0 +1,14 @@
+; $Id: comment_moderation.info,v 1.1.2.1 2009/03/15 14:48:00 dag Exp $
+name = "Comment Moderation"
+project = "comment_moderation"
+description = "Facilitates comment moderation and reporting to Mollom."
+version = "6.x-1.x-dev"
+core = "6.x"
+dependencies[] = comment
+
+; Information added by drupal.org packaging script on 2009-04-17
+version = "6.x-1.0"
+core = "6.x"
+project = "comment_moderation"
+datestamp = "1239960028"
+

@@ -1,0 +1,30 @@
+<?php
+
+/**
+ * Futurate Site specific tweaks and enhancements
+ */
+
+	/*
+function site_extras_form_alter(&$form, &$form_state, $form_id) {
+
+	// hide the promote to front page for content types that can't be promoted
+	
+	if (!in_array($form['type']['#value'], array("news_item", "event", "sponsoring_member"))) {
+	
+		unset($form['options']['promote']);
+			
+	}
+	
+}
+	*/
+
+function site_extras_site_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {  
+  switch ($op) {
+    case 'load':
+      // Make sure that the primary links menu is set as active for 
+      // node pages - this is to ensure menu trail contexts are 
+      // observed.
+      menu_set_active_menu_name('primary-links');
+    break;
+  }
+}	

@@ -1,0 +1,3 @@
+<?php
+
+include_once('alt_groups_members.features.inc');
