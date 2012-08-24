@@ -1,0 +1,13 @@
+
+name = "ThemeKey Debug"
+description = "Debug ThemeKey"
+core = 6.x
+dependencies[] = themekey
+package = ThemeKey
+
+; Information added by drupal.org packaging script on 2012-01-19
+version = "6.x-4.0"
+core = "6.x"
+project = "themekey"
+datestamp = "1326984351"
+
