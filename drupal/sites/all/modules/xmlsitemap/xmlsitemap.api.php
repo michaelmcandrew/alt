@@ -1,5 +1,4 @@
 <?php
-// $Id: xmlsitemap.api.php,v 1.1.2.19 2010/04/29 16:22:09 davereid Exp $
 
 /**
  * @file
@@ -71,6 +70,44 @@ function hook_xmlsitemap_link_alter(&$link) {
 }
 
 /**
+ * Inform modules that an XML sitemap link has been created.
+ *
+ * @param $link
+ *   Associative array defining an XML sitemap link as passed into
+ *   xmlsitemap_link_save().
+ *
+ * @see hook_xmlsitemap_link_update()
+ */
+function hook_xmlsitemap_link_insert(array $link) {
+  db_insert('mytable')
+    ->fields(array(
+      'link_type' => $link['type'],
+      'link_id' => $link['id'],
+      'link_status' => $link['status'],
+    ))
+    ->execute();
+}
+
+/**
+ * Inform modules that an XML sitemap link has been updated.
+ *
+ * @param $link
+ *   Associative array defining an XML sitemap link as passed into
+ *   xmlsitemap_link_save().
+ *
+ * @see hook_xmlsitemap_link_insert()
+ */
+function hook_xmlsitemap_link_update(array $link) {
+  db_update('mytable')
+    ->fields(array(
+      'link_type' => $link['type'],
+      'link_id' => $link['id'],
+      'link_status' => $link['status'],
+    ))
+    ->execute();
+}
+
+/**
  * Index links for the XML sitemaps.
  */
 function hook_xmlsitemap_index_links($limit) {
@@ -85,7 +122,6 @@ function hook_xmlsitemap_context_info() {
   $info['vocabulary'] = array(
     'label' => t('Vocabulary'),
     'summary callback' => 'mymodule_xmlsitemap_vocabulary_context_summary',
-    'settings callback' => 'mymodule_xmlsitemap_vocabulary_context_settings',
     'default' => 0,
   );
   return $info;
@@ -147,12 +183,12 @@ function hook_xmlsitemap_context_url_options_alter(array &$options, array $conte
  * @param $args
  *   An array of arguments to be passed to db_query() with $query.
  * @param $sitemap
- *   An XML sitemap array.
+ *   The XML sitemap object.
  */
-function hook_query_xmlsitemap_generate_alter(array &$query, array &$args, array $sitemap) {
-  if (!empty($sitemap['context']['vocabulary'])) {
+function hook_query_xmlsitemap_generate_alter(array &$query, array &$args, stdClass $sitemap) {
+  if (!empty($sitemap->context['vocabulary'])) {
     $query['WHERE'] .= " AND ((x.type = 'taxonomy_term' AND x.subtype = '%s') OR (x.type <> 'taxonomy_term')";
-    $args[] = $sitemap['context']['vocabulary'];
+    $args[] = $sitemap->context['vocabulary'];
   }
 }
 
@@ -166,13 +202,13 @@ function hook_xmlsitemap_sitemap_operations() {
  * Respond to XML sitemap deletion.
  *
  * This hook is invoked from xmlsitemap_sitemap_delete_multiple() after the XML
- * siteamp has been removed from the table in the database.
+ * sitemap has been removed from the table in the database.
  *
  * @param $sitemap
- *   The XML sitemap array that was deleted.
+ *   The XML sitemap object that was deleted.
  */
-function hook_xmlsitemap_siteamp_delete(array $sitemap) {
-  db_query("DELETE FROM {mytable} WHERE smid = '%s'", $sitemap['smid']);
+function hook_xmlsitemap_sitemap_delete(stdClass $sitemap) {
+  db_query("DELETE FROM {mytable} WHERE smid = '%s'", $sitemap->smid);
 }
 
 /**

@@ -1,5 +1,4 @@
 <?php
-// $Id: install.php,v 1.113.2.13 2010/12/06 06:50:56 goba Exp $
 
 require_once './includes/install.inc';
 
@@ -131,6 +130,12 @@ function install_main() {
     if (!$verify) {
       install_change_settings($profile, $install_locale);
     }
+    // The default lock implementation uses a database table,
+    // so we cannot use it for install, but we still need
+    // the API functions available.
+    require_once './includes/lock-install.inc';
+    $conf['lock_inc'] = './includes/lock-install.inc';
+    lock_init();
 
     // Install system.module.
     drupal_install_system();

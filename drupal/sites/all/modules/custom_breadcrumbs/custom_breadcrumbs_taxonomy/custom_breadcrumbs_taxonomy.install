@@ -1,5 +1,5 @@
 <?php
-// $Id: custom_breadcrumbs_taxonomy.install,v 1.1.2.8 2010/05/04 04:03:42 mgn Exp $
+// $Id: custom_breadcrumbs_taxonomy.install,v 1.1.2.10 2011/01/08 03:53:17 mgn Exp $
 
 /**
  * @file
@@ -64,10 +64,12 @@ function custom_breadcrumbs_taxonomy_uninstall() {
   variable_del('custom_breadcrumbs_taxonomy_append_breadcrumb');
   variable_del('custom_breadcrumbs_taxonomy_show_vocabulary');
   variable_del('custom_breadcrumbs_taxonomy_show_current_term');
+  variable_del('custom_breadcrumbs_taxonomy_show_current_term_term');
   variable_del('custom_breadcrumbs_taxonomy_include_node_title');
   variable_del('custom_breadcrumbs_taxonomy_include_nodes');
   variable_del('custom_breadcrumbs_taxonomy_node_types');
   variable_del('custom_breadcrumbs_taxonomy_views');
+  variable_del('custom_breadcrumbs_taxonomy_result_nodes');
 }
 
 /**

@@ -1,5 +1,4 @@
 <?php
-// $Id: german_services.module,v 1.1.2.5 2010/09/26 10:49:31 thecrow Exp $
 
 /**
  * @file
@@ -88,6 +87,11 @@ function german_services_service_links() {
     'name' => 'MeinVZ',
     'description' => t('Share on MeinVZ, StudiVZ or SchuelerVZ.'),
     'link' => 'http://www.studivz.net/Link/Selection/Url/?u=<encoded-url>&desc=<encoded-title>',
+  );
+  $links['_de_xing'] = array(
+    'name' => 'Xing',
+    'description' => t('Share on Xing.'),
+    'link' => 'https://www.xing.com/app/user?op=share&url=<raw-encoded-url>',
   );
 
   return $links;

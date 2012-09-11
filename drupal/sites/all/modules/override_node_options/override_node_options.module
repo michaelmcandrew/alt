@@ -1,5 +1,4 @@
 <?php
-// $Id: override_node_options.module,v 1.5.2.21 2010/07/14 17:36:06 timmillwood Exp $
 
 /**
  * @file
@@ -17,6 +16,7 @@ function override_node_options_perm() {
     $perms[] = 'override ' . $node_type . ' published option';
     $perms[] = 'override ' . $node_type . ' promote to front page option';
     $perms[] = 'override ' . $node_type . ' sticky option';
+    $perms[] = 'enter ' . $node_type . ' revision log entry';
     $perms[] = 'override ' . $node_type . ' revision option';
     $perms[] = 'override ' . $node_type . ' authored on option';
     $perms[] = 'override ' . $node_type . ' authored by option';
@@ -73,8 +73,9 @@ function override_node_options_form_alter(&$form, $form_state, $form_id) {
       '#default_value' => (isset($node->log) ? $node->log : ''),
       '#rows' => 2,
       '#description' => t('An explanation of the additions or updates being made to help other authors understand your motivations.'),
+      '#access' => user_access('administer nodes') || user_access('enter ' . $node->type . ' revision log entry'),
     );
-    $form['revision_information']['#access'] = !empty($node->revision) || $form['revision_information']['revision']['#access'];
+    $form['revision_information']['#access'] = $form['revision_information']['log']['#access'] || $form['revision_information']['revision']['#access'];
 
     // Add access to the 'Authoring information' fieldset.
     $form['author']['name']['#access'] = user_access('override ' . $node->type . ' authored by option');

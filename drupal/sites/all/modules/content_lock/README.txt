@@ -1,24 +1,26 @@
-﻿/* $Id: README.txt,v 1.1.2.13.2.3 2010/11/06 14:07:59 eugenmayer Exp $ */
--- Fork --
-
-This module is a fork of the module http://drupal.org/project/checkout and has 
-been nearly completely reweritten since then
+﻿content_lock
 
 -- SUMMARY --
-This module implements a pessimistic locking strategy, which means that content
-will be exclusively locked whenever a user starts editing it.  The lock will be
-automatically released when the user submits the form or navigates away from
-the edit page.
 
-Users may also permanently lock content, to prevent others from editing it.  
-Content locks that have been "forgotten" can be automatically released after a
-configurable time span.
+The purpose of this module is to avoid the situation where two people
+are editing a single node at the same time. On busy sites with dynamic
+content, edit collisions are a problem and may frustrate editors with
+an error stating that the node was already modified and can't be
+updated. This module implements a pessimistic locking strategy, which
+means that content will be exclusively locked whenever a user starts
+editing it. The lock will be automatically released when the user
+submits the form or navigates away from the edit page.
 
-For a full description visit the project page:
+Content locks that have been "forgotten" can be automatically released
+after a configurable time span using the bundled content_lock_timeout
+submodule.
+
+For a full description, visit the project page:
   http://drupal.org/project/content_lock
-Bug reports, feature suggestions and latest developments:
+Bug reports, feature suggestions, and latest developments:
   http://drupal.org/project/issues/content_lock
-
+For integrating modules with content_lock, see:
+  http://drupalcontrib.org/api/drupal/contributions--content_lock--content_lock.api.inc
 
 -- INSTALLATION --
 
@@ -27,35 +29,65 @@ Bug reports, feature suggestions and latest developments:
 2. Configure user permissions at User management >> Permissions:
 
    check out documents - This enables content locking when a user starts
-     editing it.  Note that even without this permission, users are still
-     able to edit contents, they're just not protected against concurrent
-     edits.
+     editing it.  Note that even *without* this permission, users are still
+     able to edit node contents and are *not* protected from concurrent
+     editing.
 
-   keep documents checked out - Whether to allow users to keep content locked
-     across edits.  This will enable a similar named checkbox on the content
-     edit form.
+   administer checked out documents - View and release locked contents
+     of all users.  This enables the administrative tab on Content
+     management >> Content. Note users can manage their own content
+     locks on their profile page *without* this permission in their
+     profile page. This is intended for administrators or moderators
+     only.
 
-   administer checked out documents - View and release locked contents of all
-     users.  This enables the administrative tab on Content management >>
-     Content.  Note that even without this permission, users can manage their
-     own content locks on their profile page.
+3. Configure the module at Site Configuration >> Content lock.
 
-3. Configure the module at Content management >> Post settings.
+    Use javascript to detect leaving the node form - Automatically unlock nodes
+      when users navigate away from a node edit page by clicking miscellaneous
+      links.
 
-   Show lock / unlock message - Make content_lock more verbose, informing a
-     user when he locks a node and about his inconsideration when he visits
-     one node while he has kept another node locked.
+      Confirm that the user really wants to leave the node form with a
+        Javascript popup - when the user navigates away from a node edit page
+        without having saved the node, ask the user to confirm that
+        choice. Disable this if you find the confirmation dialog box annoying.
 
-   Add cancel button - Adds a link in a node's edit form to cancel the edit,
-     letting the user intentionally navigate away from the Edit page without
-     being asked for confirmation by a javascript dialog.
+      Javascript popup message text - If the user is asked to confirm leaving
+        the node edit page, use this text in the dialog box. Note that most
+        browsers have taken to ignoring the Javascript-supplied text and will
+        merely ask the user if the user is sure the user intends to navigate
+        away.
+
+    Show lock / unlock message - Make content_lock more verbose, informing a
+      user when he locks a node and about his inconsideration when he visits
+      one node while he has kept another node locked.
+
+    Add cancel button - Adds a link in a node's edit form to cancel the edit,
+      letting the user intentionally navigate away from the Edit page without
+      being asked for confirmation by a javascript dialog.
+
+    Lockable content types - You may choose to limit content_lock's effects
+      to specific node types instead of across the board. Do not select any
+      content types to ensure that all content types are protected.
+
+    Lockable text formats - You may choose what type of node input formats
+      may be lockable. Do not select any input types if content_lock should
+      protect all input types.
+
+4. If you want stale locks to time out, enable the content_lock_timeout
+    ("Content Locking (edit lock) timeouts") module. Then return to the
+    Content Lock settings page and configure the timeout.
+
+5. View and administer locked nodes Content management >> Content >>
+    Locked Documents.
 
 -- CREDITS --
-Current authors:
+Current maintainers:
+Nathan Phillip Brink (ohnobinki) http://drupal.org/user/108406
 Eugen Mayer http://drupal.org/user/108406
-Nathan Phillip Brink http://drupal.org/user/108406
 
+This module is a fork/continuation of
+http://drupal.org/project/checkout which was written and maintained
+by:
 
-Original authors:
 Stefan M. Kudwien
 Joël Guesclin

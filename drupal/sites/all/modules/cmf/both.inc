@@ -1,5 +1,5 @@
 <?php
-// $Id: both.inc,v 1.2.2.11.2.1 2009/08/22 00:01:11 nancyw Exp $
+// $Id: both.inc,v 1.2.2.11.2.2 2009/10/01 19:18:36 nancyw Exp $
 
 /**
  * @file
@@ -13,8 +13,6 @@
  * Defines the form for mixed content administration filter results.
  *
  * @ingroup forms
- * @see cmf_admin_both_form_validate().
- * @see cmf_admin_both_form_submit().
  *
  * @return array with forms properties
  */
@@ -154,8 +152,6 @@ function cmf_admin_both_form() {
  * We can't execute any 'Update options' if no objects were selected.
  *
  * @ingroup forms
- * @see cmf_admin_both_form()
- * @see cmf_admin_both_form_submit()
  *
  * @param the ID of the passed form
  * @param array with the form properties values
@@ -174,8 +170,6 @@ function cmf_admin_both_form_validate($form, &$form_state) {
  * publishing, unpublishing or deleting.
  *
  * @ingroup forms
- * @see cmf_admin_both_form()
- * @see cmf_admin_both_form_validate()
  *
  * @param the ID of the passed form
  * @param array with the form properties values

@@ -1,5 +1,4 @@
-<?php
-// $Id: content_lock.admin.inc,v 1.1.2.6.2.3 2010/11/06 14:07:59 eugenmayer Exp $
+<?php /* -*- mode: php; indent-tabs-mode: nil; tab-width: 2; -*- */
 
 # Copyright (c) 2010 Impressive.media
 # Author: Eugen Mayer
@@ -8,31 +7,49 @@
  * Providing an administration interface for content_lock.
  */
 function content_lock_admin_settings() {
+  drupal_add_js(drupal_get_path('module','content_lock') . '/content_lock.admin.js');
+
   $form['content_lock_unload_js'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use javascript to detect leaving the node form'),
-      '#description' => t('If you disable this, there will be no messages like "Do you really want to leave this node and lose all changes. Lock gets removed then"'),
+      '#description' => t('If you disable this, nodes will remain locked if the user navigates away from the node without saving it or clicking the cancel button.'),
       '#default_value' => variable_get('content_lock_unload_js', true),
   );
-  
+  $form['content_lock_unload_js_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Javascript detection options.'),
+  );
+  $form['content_lock_unload_js_fieldset']['content_lock_unload_js_message_enable'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Confirm that the user really wants to leave the node form with a Javascript popup'),
+    '#description' => t('This will cause a Javascript popup to ask the user if navigating away from the node edit page is intentional, giving the user an opportunity to cancel navigation so that the changes to the node may be saved. This will not appear if the user clicks the cancel button.'),
+    '#default_value' => variable_get('content_lock_unload_js_message_enable', TRUE),
+  );
+  $form['content_lock_unload_js_fieldset']['content_lock_unload_js_message'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Javascript popup message text'),
+      '#description' => t('This option allows you to modify the text the user sees when navigating away from an edited node.'),
+      '#default_value' => variable_get('content_lock_unload_js_message', 'If you proceed, ALL of your changes will be lost.'),
+  );
+
   $form['content_lock_admin_verbose'] = array(
       '#type' => 'checkbox',
       '#title' => t('Show lock / unlock messages'),
-      '#description' => t('If you disable this option, no messages about unlock / lock of nodes are shown to the user anymore'),
+      '#description' => t('This option controls whether or not content_lock inform the user that he has locked/unlocked a node. This does not control the javascript dialogues.'),
       '#default_value' => variable_get('content_lock_admin_verbose', true),
   );
 
   $form['content_lock_admin_cancelbutton'] = array(
       '#type' => 'checkbox',
       '#title' => t('Add cancel button'),
-      '#description' => t('Should a cancel button be added to the node / user / comment form. This way a user can properly cancel the transaction'),
+      '#description' => t('Adds a cancel button to the node / user / comment form. This way a user can properly cancel the transaction.'),
       '#default_value' => variable_get('content_lock_admin_cancelbutton', true),
   );
 
   $form['content_lock_allowed_node_types'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Lockable content types'),
-    '#description' => t('Apply lock to the selected content types. Leave blank for all.'),
+    '#description' => t('Apply lock to the selected content types. Leave blank for all node types to be lockable.'),
     '#options' => node_get_types('names'),
     '#default_value' => variable_get('content_lock_allowed_node_types', array()),
   );
@@ -46,7 +63,7 @@ function content_lock_admin_settings() {
   $form['content_lock_allowed_formats'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Lockable text formats'),
-    '#description' => t('Apply lock to selected formats only. Leave blank for all.'),
+    '#description' => t('Apply lock to selected formats only. Leave blank for all node input formats to be lockable.'),
     '#options' => $format_options,
     '#default_value' => variable_get('content_lock_allowed_formats', array()),
   );

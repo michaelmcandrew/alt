@@ -1,4 +1,3 @@
-// $Id: README.txt,v 1.1 2009/04/15 10:20:04 antoniodemarco Exp $
 
 This module solves the Internet Explorer limitation of loading not more then 
 30 CSS files per HTML page  (http://support.microsoft.com/kb/262161). 

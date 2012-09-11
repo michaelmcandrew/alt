@@ -1,4 +1,3 @@
-// $Id: favorite_services.js,v 1.1.2.4 2010/10/04 16:11:15 thecrow Exp $
 if (Drupal.jsEnabled) {
   $(document).ready(function(){
     // work only for FF, IE, Opera, Chrome
@@ -7,23 +6,22 @@ if (Drupal.jsEnabled) {
       if (window.chrome) {
         $("a.service-links-favorite").click(function(event){
           event.preventDefault();
-          alert(Drupal.t('Use CTRL + D for add this in your Bookmark'));
+          alert(Drupal.t('Use CTRL + D to add this to your bookmarks'));
         });
       } else if (window.opera && window.print) {
         $("a.service-links-favorite").each(function(){
-          var url = unescape($(this).attr('href').replace(/\+/g, ' '));
-          var url = url.replace(/^[^\?]*\?/g, '');
-          var title = url.replace(/^[^#]*#/g, '');
-          url = url.replace(/#.*$/g, '');
+          var url = $(this).attr('href').split('&favtitle=');
+          var title = decodeURI(url[1]);
+          url = url[0];
+
           $(this).attr('rel', 'sidebar').attr('href', url).attr('title', title);
         });
       } else if (window.sidebar || window.external.AddFavourite) {
         $("a.service-links-favorite").click(function(event){
           event.preventDefault();
-          var url = unescape($(this).attr('href').replace(/\+/g, ' '));
-          var url = url.replace(/^[^\?]*\?/g, '');
-          var title = url.replace(/^[^#]*#/g, '');
-          url = url.replace(/#.*$/g, '');
+          var url = $(this).attr('href').split('&favtitle=');
+          var title = decodeURI(url[1]);
+          url = url[0];
 
           if (window.sidebar) {
             window.sidebar.addPanel(title, url, '');

@@ -1,5 +1,4 @@
-<?php
-/* $Id$ */
+<?php /* -*- mode: php; indent-tabs-mode: nil; tab-width: 2; -*- */
 
 /**
  * @file

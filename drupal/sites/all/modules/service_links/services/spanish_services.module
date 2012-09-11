@@ -1,5 +1,4 @@
 <?php
-// $Id: spanish_services.module,v 1.1.2.4 2010/10/01 07:56:59 thecrow Exp $
 
 /**
  * @file
@@ -31,7 +30,7 @@ function spanish_services_service_links() {
   $links['_es_barrapunto'] = array(
     'name' => 'Barrapunto',
     'description' => t('Publish this post on Barrapunto.com'),
-    'link' => 'http://barrapunto.com/submit.pl?story=He+leido+en+<source>+el+articulo+<a href="<encoded-url>"><encoded-title></a>&subj=<encoded-title>',
+    'link' => 'http://barrapunto.com/submit.pl?story=He+leido+en+<encoded-source>+el+articulo+<a href="<encoded-url>"><encoded-title></a>&subj=<encoded-title>',
   );
   $links['_es_tuenti'] = array(
     'name' => 'Tuenti',

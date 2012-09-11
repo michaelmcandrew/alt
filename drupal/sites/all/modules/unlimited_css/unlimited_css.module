@@ -1,27 +1,68 @@
 <?php
-// $Id: unlimited_css.module,v 1.4 2010/02/15 10:39:50 antoniodemarco Exp $
 
 /**
  * @file
  * IE Unlimited CSS Loader module.
  *
- * This module solves the Internet Explorer limitation of loading
- * not more then 30 CSS files per HTML page  (http://support.microsoft.com/kb/262161).
+ * This module solves the Internet Explorer limitation of loading 
+ * not more than 31 CSS files per HTML page  (http://support.microsoft.com/kb/262161).
  */
+
 
 /**
  * Implementation of hook_preprocess_page().
  */
 function unlimited_css_preprocess_page(&$vars) {
-  $css = $vars['css'];
+  $files = _unlimited_css_build_files_array($vars['css']);
+  
+  if (count($files) < 22) {
+    // traditional method.
+    $styles = _unlimited_css_traditional($files);
+  }
+  else {
+    // all-import method for high numbers of css files.
+    $styles = _unlimited_css_import($files);
+  }
+  
+  // TODO:
+  //   The 'conditional_styles' are probably included with <link> instead of @import.
+  //   This will result in a mix of <link> and @import,
+  //   and might cause an unpredictable order of stylesheet loading in IE6,
+  //   in case of the all-import method above.
+  if (!empty($vars['conditional_styles'])) {
+    $styles .= "\n". $vars['conditional_styles'];
+  }
+  
+  $styles .= "\n\n";
+  
+  if ($styles) {
+    // make the original styles html available to the active theme,
+    // for whatever reason.
+    $vars['styles_original'] = $vars['styles'];
+    
+    // allow to recover the styles produced with unlimited_css,
+    // even if $vars['styles'] has been overridden by an other module.
+    $vars['styles_unlimited_css'] = $styles;
+    
+    // write to the variable that will be printed in page.tpl.php
+    $vars['styles'] = $styles;
+  }
+}
+
+
+/**
+ * Build an array of css files in the correct order.
+ *
+ * @param $css
+ *   nested array of filenames by media
+ * @return 
+ *   array of css files ($media, $href)
+ */
+function _unlimited_css_build_files_array($css) {
   $output = array();
   $no_module_preprocess = array();
   $no_theme_preprocess = array();
 
-  // Using code from d6 core's drupal_get_css() to provide proper
-  // CSS ordering and dealing with other issues.
-  // Thanks donquixote (http://drupal.org/user/459338) for pointing this out:
-  // http://drupal.org/node/693180#comment-2596580
   $preprocess_css = (variable_get('preprocess_css', FALSE) && (!defined('MAINTENANCE_MODE') || MAINTENANCE_MODE != 'update'));
   $directory = file_directory_path();
   $is_writable = is_dir($directory) && is_writable($directory) && (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC) == FILE_DOWNLOADS_PUBLIC);
@@ -61,7 +102,7 @@ function unlimited_css_preprocess_page(&$vars) {
             }
             // If a CSS file is not to be preprocessed and it's a theme CSS file, it needs to *always* appear at the *bottom*,
             // regardless of whether preprocessing is on or off.
-            else if (!$preprocess && $type == 'theme') {
+            elseif (!$preprocess && $type == 'theme') {
               $no_theme_preprocess[] = array($media, base_path() . $file . $query_string);
             }
             else {
@@ -80,43 +121,61 @@ function unlimited_css_preprocess_page(&$vars) {
       $output[] = array($media, base_path() . $preprocess_file);
     }
   }
-
-  $files = array_merge($no_module_preprocess, $output, $no_theme_preprocess);
-
-  $styles = '';
-  if (count($files) < 22) {
-    // traditional method.
-    foreach ($files as $css_file) {
-      list ($media, $href) = $css_file;
-      $styles .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. $href .'" />'."\n";
-    }
-  }
-  else {
-    // import method
-    $counter = 0;
-    $media = NULL;
-    $import = '';
-    foreach ($files as $css_file) {
-      list ($media_new, $href) = $css_file;
-      if ($media_new != $media || $counter > 25) {
-        if ($media && !empty($import)) {
-          $styles .= "\n".'<style type="text/css" media="'. $media .'">'."\n". $import .'</style>';
-          $import = '';
-        }
-        $counter = 0;
-        $media = $media_new;
-      }
-      $import .= '@import "'. $href .'";'."\n";
-      ++$counter;
-    }
-    if ($media && !empty($import)) {
-      $styles .= "\n".'<style type="text/css" media="'. $media .'">'."\n". $import .'</style>';
-    }
-  }
-  if (!empty($vars['conditional_styles'])) {
-    $styles .= "\n". $vars['conditional_styles'];
-  }
-  if ($styles) {
-    $vars['styles'] = $styles;
-  }
+  
+  return array_merge($no_module_preprocess, $output, $no_theme_preprocess);
 }
+
+
+/**
+ * Use link tags for CSS
+ *
+ * @param $files
+ *   array of css files ($media, $href)
+ * @return string
+ *   html of the css link tags
+ */
+function _unlimited_css_traditional($files) {
+  $styles = '';
+  foreach ($files as $css_file) {
+    list ($media, $href) = $css_file;
+    $styles .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. $href .'" />'."\n";
+  }
+  return $styles;
+}
+
+
+/**
+ * Use import tags for CSS
+ *
+ * @param $files
+ *   array of css files ($media, $href)
+ * @return string
+ *   html of the css import tags
+ */
+function _unlimited_css_import($files) {
+  $counter = 0;
+  $media = NULL;
+  $import = '';
+  $styles = '';
+  foreach ($files as $css_file) {
+    list ($media_new, $href) = $css_file;
+    if ($media_new != $media || $counter > 25) {
+      if ($media && !empty($import)) {
+        $styles .= "\n".'<style type="text/css" media="'. $media .'">'."\n". $import .'</style>';
+        $import = '';
+      }
+      $counter = 0;
+      $media = $media_new;
+    }
+    $import .= '  @import "'. $href .'";'."\n";
+    ++$counter;
+  }
+  if ($media && !empty($import)) {
+    $styles .= "\n".'<style type="text/css" media="'. $media .'">'."\n". $import .'</style>';
+  }
+  return $styles;
+}
+
+
+
+

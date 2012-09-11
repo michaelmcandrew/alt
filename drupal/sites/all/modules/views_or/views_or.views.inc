@@ -1,5 +1,4 @@
 <?php
-// $Id: views_or.views.inc,v 1.12 2009/05/14 21:13:16 darrenoh Exp $
 
 /**
  * @file
@@ -10,11 +9,14 @@
  */
 
 /**
- * Implementation of hook_views_data_alter().
+ * Implementation of hook_views_data().
  */
-function views_or_views_data_alter(&$cache) {
-  $cache['node']['views_or_begin'] = array(
-    'group' => t('Views Or'),
+function views_or_views_data() {
+  $data['views_or']['table']['group'] = t('Views Or');
+  $data['views_or']['table']['join'] = array(
+    '#global' => array(),
+  );
+  $data['views_or']['views_or_begin'] = array(
     'title' => t('Begin alternatives'),
     'help' => t('When using Views Or, this starts a section of alternatives'),
     'filter' => array(
@@ -27,8 +29,7 @@ function views_or_views_data_alter(&$cache) {
       'handler' => 'views_or_handler_argument_begin_alternatives',
     ),
   );
-  $cache['node']['views_or_next'] = array(
-    'group' => t('Views Or'),
+  $data['views_or']['views_or_next'] = array(
     'title' => t('Next alternative'),
     'help' => t('When using Views Or, delimitates an alternative with a begin alternatives/end alternatives block'),
     'filter' => array(
@@ -38,8 +39,7 @@ function views_or_views_data_alter(&$cache) {
       'handler' => 'views_or_handler_argument_next_alternative',
     ),
   );
-  $cache['node']['views_or_end'] = array(
-    'group' => t('Views Or'),
+  $data['views_or']['views_or_end'] = array(
     'title' => t('End alternatives'),
     'help' => t('When using Views Or, finishes a block of alternatives.'),
     'filter' => array(
@@ -52,6 +52,7 @@ function views_or_views_data_alter(&$cache) {
       'handler' => 'views_or_handler_argument_end_alternatives',
     ),
   );
+  return $data;
 }
 
 /**

@@ -27,3 +27,16 @@ Configuration
 -------------
 
 "Site configuration" > "Empty Page" <admin/settings/empty-page>
+
+
+Example: Create an empty front page
+-------------------------------
+
+1. Create an Empty Page callback. <admin/build/empty-page/add>
+
+2. Enter "node" in the Internal Path field (if that is what you have under Default Front Page on the Site Information page). <admin/settings/site-information>
+
+3. Add a Page Title (optional) and Save.
+
+
+The standard list of the latest 10 nodes promoted to the front page is now gone.

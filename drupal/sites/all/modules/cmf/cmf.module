@@ -1,5 +1,5 @@
 <?php
-// $Id: cmf.module,v 1.2.2.19.2.2 2009/09/05 19:57:12 nancyw Exp $
+// $Id: cmf.module,v 1.2.2.19.2.8 2010/11/30 23:34:45 inadarei Exp $
 /**
  * @file
  * @brief Content management filter module file
@@ -53,8 +53,7 @@ function cmf_menu() {
     'title' => 'CMF',
     'description' => 'User-specific content management filter',
     'page callback' => 'cmf_admin_content_page',
-    'access callback' => '_cmf_userspace_perms',
-    'access arguments' => array('view user content list', 'access user profiles'),
+    'access arguments' => array('view user content list'),
     'type' => MENU_LOCAL_TASK,
     );
 
@@ -63,11 +62,22 @@ function cmf_menu() {
     'page callback' => '_cmf_user_autocomplete',
     'access callback' => 'user_access',
     'access callback' => '_cmf_userspace_perms',
-    'access arguments' => array('filter and manage site content', 'view user content list', 'access user profiles'),
+    'access arguments' => array('filter and manage site content', 'view user content list'),
     'type' => MENU_CALLBACK,
     );
 
   return $items;
+}
+
+/**
+ * Check user permissions to see menu item under example.com/user/UID/cmf
+ *
+ * @param access strings
+ * @param access strings
+ * @return boolean
+ */
+function _cmf_userspace_perms($manage_access, $view_access) {
+  return (user_access($manage_access) || user_access($view_access));
 }
 
 /**
@@ -79,12 +89,14 @@ function cmf_menu() {
  *   '#options' is also used in function cmf_filter_form_submit.
  *   'title' is the text that will show on the filter form.
  *   'single_use' (bool) determines if the filter will be disabled if it is already in use.
- *   'whole_value'  (bool) TRUE of the value is a complete value,
- *      FALSE if it is a portion, such as a substring.
+ *   'whole_value'  "before" if the value is complete and shown before "is",
+ *      "after" if the value is complete and shown after "is",
+ *      "no" if it is a portion ("contains"), such as a substring.
+ *   'disable' is a list of other filters to remove if this one is selected.
  *   'where' sets a simple WHERE clause for the query (with substitution).
  *   'join' sets a simple JOIN clause for the query (with substitution).
  *   'query_build' provides a funtion for more complex query clauses.
- *   If validation and/or submission handling is needed, use the #validate and #submit elements.
+ *   If validation and/or submission handling is needed, use the #element_validate and #submit elements.
  *   Submit handlers must set the return value in $form_state['values'] array.
  *
  *  NOTE: for the 'where' clause some node fields are translated to comment-equivalent
@@ -102,7 +114,7 @@ function cmf_filters($user_page = FALSE) {
   $filters['status'] = array(
     'title' => t('node status'),
     'single_use' => FALSE,
-    'whole_value' => TRUE,
+    'whole_value' => 'before',
     'query_build' => '_cmf_status_query_build',
     '#type' => 'select',
     '#options' => array(
@@ -117,21 +129,33 @@ function cmf_filters($user_page = FALSE) {
   $filters['type'] = array(
     'title' => t('node type'),
     'single_use' => TRUE,
-    'whole_value' => TRUE,
+    'whole_value' => 'before',
     'where' => "n.type = '%s'",
     '#type' => 'select',
     '#options' => node_get_types('names'),
     );
 
+  //-- workflow filter
+  if(module_exists('workflow') && function_exists('workflow_load_all'))  {
+    $filters['workflow_state'] = array(
+      'title' => t('workflow state'),
+      'single_use' => FALSE,
+      'whole_value' => 'before',
+      'query_build' => '_cmf_workflow_query_build',
+      '#type' => 'select',
+      '#options' => cmf_get_workflows(),
+      );    
+  }
+  
   // The taxonomy filter.
-  if ($taxonomy = taxonomy_form_all(TRUE)) {
+  if (module_exists('taxonomy')) {
     $filters['category'] = array(
       'title' => t('category'),
       'single_use' => FALSE,
-      'whole_value' => TRUE,
+      'whole_value' => 'before',
       'query_build' => '_cmf_category_query_build',
       '#type' => 'select',
-      '#options' => $taxonomy,
+      '#options' => taxonomy_form_all(TRUE),
       );
   }
 
@@ -139,27 +163,29 @@ function cmf_filters($user_page = FALSE) {
   $filters['title'] = array(
     'title' => t('title/subject'),
     'single_use' => FALSE,
-    'whole_value' => FALSE,
+    'whole_value' => 'no',
     'where' => "LOWER(n.title) LIKE LOWER('%%%s%%')",
     '#type' => 'textfield',
+    '#element_validate' => array('_cmf_contains_validate'),
     );
 
   $filters['body_contains'] = array(
     'title' => t('body'),
     'single_use' => FALSE,
-    'whole_value' => FALSE,
+    'whole_value' => 'no',
     'where' => "LOWER(r.body) LIKE LOWER('%%%s%%')",
     '#type' => 'textfield',
+    '#element_validate' => array('_cmf_contains_validate'),
     );
 
   $filters['created_after'] = array(
     'title' => t('created after'),
     'single_use' => TRUE,
-    'whole_value' => TRUE,
+    'whole_value' => 'after',
     'where' => "n.created >= %d",
     '#type' => 'date',
-    '#validate' => 'date_validate',
-    '#submit' => array('cmf_date_submit'),
+    '#element_validate' => array('date_validate', '_cmf_date_validate'),
+    '#submit' => array('cmf_date_handler'),
     '#default_value' => array('year' => date('Y'), 'month' => 1, 'day' => 1),
     '#prefix' => '<div class="date-inline">',
     '#suffix' => '</div>',
@@ -168,11 +194,11 @@ function cmf_filters($user_page = FALSE) {
   $filters['created_before'] = array(
     'title' => t('created before'),
     'single_use' => TRUE,
-    'whole_value' => TRUE,
+    'whole_value' => 'after',
     'where' => "n.created <= %d",
     '#type' => 'date',
-    '#validate' => 'date_validate',
-    '#submit' => array('cmf_date_submit'),
+    '#element_validate' => array('date_validate', '_cmf_date_validate'),
+    '#submit' => array('cmf_date_handler'),
     '#default_value' => array('year' => date('Y'), 'month' => 12, 'day' => 31),
     '#prefix' => '<div class="date-inline">',
     '#suffix' => '</div>',
@@ -183,7 +209,7 @@ function cmf_filters($user_page = FALSE) {
     $filters['language'] = array(
       'title' => t('language'),
       'single_use' => TRUE,
-      'whole_value' => TRUE,
+      'whole_value' => 'before',
       'where' => "n.language ='%s'",
       '#type' => 'select',
       '#options' => $lang_codes,
@@ -195,7 +221,8 @@ function cmf_filters($user_page = FALSE) {
     $filters['user'] = array(
       'title' => t('user list'),
       'single_use' => TRUE,
-      'whole_value' => TRUE,
+      'whole_value' => 'before',
+      'disable' => array('users', 'role', 'blocked'),
       'where' => "u.uid = %d",
       '#type' => 'select',
       '#options' => cmf_get_users('names'),
@@ -205,17 +232,18 @@ function cmf_filters($user_page = FALSE) {
     $filters['users'] = array(
       'title' => t('user name'),
       'single_use' => TRUE,
-      'whole_value' => TRUE,
+      'whole_value' => 'before',
+      'disable' => array('user', 'role', 'blocked'),
       'where' => "u.name = '%s'",
       '#type' => 'textfield',
-      '#submit' => array('cmf_users_submit'),
+      '#submit' => array('cmf_users_handler'),
       '#autocomplete_path' => 'cmf/userauto',
       );
 
     $filters['role'] = array(
       'title' => t('user role'),
       'single_use' => TRUE,
-      'whole_value' => TRUE,
+      'whole_value' => 'before',
       'where' => "u.uid = ur.uid AND ur.rid = %d",
       'join' => "INNER JOIN {users_roles} ur ON u.uid = ur.uid",
       '#type' => 'select',
@@ -225,11 +253,13 @@ function cmf_filters($user_page = FALSE) {
     $filters['blocked'] = array(
       'title' => t('user status'),
       'single_use' => TRUE,
+      'whole_value' => 'before',
       'where' => "u.status = %d AND u.uid != 0",
       '#type' => 'select',
       '#options' => array(1 => t('active'), 0 => t('blocked')),
       );
   }
+  drupal_alter('cmf_filters', $filters);
   return $filters;
 }
 
@@ -280,7 +310,6 @@ function cmf_admin_content_page() {
  * Defines the form for content administration filters.
  *
  * @ingroup forms
- * @see cmf_filter_form_submit()
  *
  * @param (optional) true if the filter to be built serves the user profile page
  * @return array with forms properties
@@ -379,20 +408,38 @@ function cmf_filter_form(&$form_state, $true = NULL) {
     else {
       $and = NULL;
     }
-    if ($filters[$type]['whole_value']) {
-      $form['filters']['current'][] = array('#value' => $and . t('%filter_name is %filter_value', $trans_strings));
-    }
-    else {
-      $form['filters']['current'][] = array('#value' => $and . t('%filter_name contains %filter_value', $trans_strings));
+
+    switch ($filters[$type]['whole_value']) {
+      case 'after':
+        $form['filters']['current'][] = array('#value' => $and . t('is %filter_name %filter_value', $trans_strings));
+        break;
+
+      case 'before':
+        $form['filters']['current'][] = array('#value' => $and . t('%filter_name is %filter_value', $trans_strings));
+        break;
+
+      case 'no':
+        $form['filters']['current'][] = array('#value' => $and . t('%filter_name contains %filter_value', $trans_strings));
+        break;
     }
 
-    // Remove the respective option if it is already being filtered on.
+    // Remove mutually exclusive filters.
+    if (isset($filters[$type]['disable'])) {
+      foreach ($filters[$type]['disable'] as $exclude) {
+        unset($filters[$exclude]);
+      }
+    }
+
+    // Remove the single use option if it is already being filtered on.
+    if ($type == 'status') {
+//      drupal_set_message('okay, what do I get rid of? '. print_r($filter,true));
+//      dsm(print_r($filters['status'],true));
+      // Strip current value, then unset both values.
+      $status = drupal_substr($filter[1], 0, -1);
+      unset ($filters['status']['#options'][$status.'0'], $filters['status']['#options'][$status.'1']);
+    }
     if ($filters[$type]['single_use']) {
       unset($filters[$type]);
-    }
-    // Additional unset for 'users'.
-    if ($type == 'user') {
-      unset($filters['users']);
     }
   }
 
@@ -404,7 +451,7 @@ function cmf_filter_form(&$form_state, $true = NULL) {
     $form['filters']['status'][$key] = array();
     foreach ($filter as $element => $value) {
       // If the filter element name begins with '#' then it is for the form.
-      if (substr($element, 0, 1) == '#') {
+      if (drupal_substr($element, 0, 1) == '#') {
         $form['filters']['status'][$key][$element] = $value;
       }
     }
@@ -462,7 +509,6 @@ function cmf_filter_form(&$form_state, $true = NULL) {
  * Handle post-validation form submission.
  *
  * @ingroup forms
- * @see cmf_filter_form($form_state, )
  *
  * @param the ID of the passed form
  * @param array with the form properties values
@@ -528,10 +574,49 @@ function cmf_filter_form_apply($form, &$form_state) {
 }
 
 /**
+ * Validation handler for filter doing "contains".
+ */
+function _cmf_contains_validate($form) {
+  // Make sure this was triggered by the selected filter.
+  if ($form['#name'] == $form['#post']['filter']) {
+    // Strip blanks to see if the field is empty.
+    $value = trim($form['#value']);
+    if (empty($value)) {
+      form_error($form, t('%name text value may not be empty.', array('%name' => $form['#name'])));
+    }
+  }
+}
+
+/**
+ * Validation handler for filter doing "dates".
+ */
+function _cmf_date_validate($form) {
+  // Make sure this was triggered by the selected filter.
+  if ($form['#name'] != $form['#post']['filter']) {
+    return;
+  }
+
+  // Determine correct time values depending on the filter name.
+  if (strpos($form['#name'], 'before') === FALSE) {
+    $entered_date = mktime(0, 0, 0, (int)$form['#value']['month'], (int)$form['#value']['day'], (int)$form['#value']['year'], 1);
+  }
+  else {
+    $entered_date = mktime(11, 59, 59, (int)$form['#value']['month'], (int)$form['#value']['day'], (int)$form['#value']['year'], 1);
+  }
+
+// drupal_set_message('_cmf_date_validate, filter='.$form['#post']['filter'].', name='.$form['#name'].' '.print_r($form['#value'], true).', calc='.format_date($entered_date));
+// drupal_set_message('current filters='.print_r($_SESSION['cmf_overview_filter'], true));
+
+  if (empty($entered_date)) {
+    form_error($form, t('%name date value may not be empty.', array('%name' => $form['#name'])));
+  }
+}
+
+/**
  * Submit handler for 'users' filter.
  * Ignore the Coder flag - it is a false positive.
  */
-function cmf_users_submit($form, &$form_state) {
+function cmf_users_handler($form, &$form_state) {
   $name = $form_state['values']['users'];
   // Get uid to put in 'user' filter value.
   $form_state['values']['user'] = db_result(db_query('SELECT uid FROM {users} WHERE name = "%s"', $name));
@@ -544,7 +629,7 @@ function cmf_users_submit($form, &$form_state) {
  * Submit handler for date filters.
  * Ignore the Coder flag - it is a false positive.
  */
-function cmf_date_submit($form, &$form_state) {
+function cmf_date_handler($form, &$form_state) {
   $filter = $form_state['values']['filter'];
   return gmmktime(0, 0, 0, $form_state['values'][$filter]['month'], $form_state['values'][$filter]['day'], $form_state['values'][$filter]['year']);
 }
@@ -952,23 +1037,6 @@ function _cmf_get_user_path($uid) {
 }
 
 /**
- * Check user permissions to see menu item under example.com/user/UID/cmf
- *
- * @param access strings
- * @param access strings
- * @return boolean
- */
-function _cmf_userspace_perms($manage_access, $view_access) {
-  $args = func_get_args();
-  $allow = FALSE;
-  foreach ($args as $perm) {
-    $allow |= user_access($perm);
-  }
-//  return (user_access($manage_access) || user_access($view_access));
-  return $allow;
-}
-
-/**
  * Get the term for a forum node
  *
  * @param node ID
@@ -982,4 +1050,40 @@ function _cmf_get_forum($nid) {
     $path[] = $parent->name;
   }
   return implode(' > ', array_reverse($path));
+}
+
+function cmf_get_workflows() {
+  if (!module_exists('workflow')) return;  
+  if (!function_exists('workflow_load_all')) return;
+  
+  $workflows = workflow_load_all();
+  
+  $states = array();
+  if (is_array($workflows)) {
+    foreach ($workflows as $workflow) {
+      if (is_array($workflow->states)) {
+        foreach ($workflow->states as $state) {
+          $states[$state->name] = $workflow->label . " : " . $state->label;
+        }
+      }
+    }
+  }
+  
+  return $states;
+  
+}
+
+/**
+ * Query_build function for workflow
+ */
+function _cmf_workflow_query_build($key, $value, $index) {
+  if (!module_exists('workflow')) return;  
+  if (!function_exists('workflow_load_all')) return;
+
+  $table = "workflow_node";
+  return array(
+    'where' => "$table.state_name = '%s'",
+    'join' => "INNER JOIN {$table} $table ON n.nid = $table.nid ",
+    'value' => $value,
+    );
 }

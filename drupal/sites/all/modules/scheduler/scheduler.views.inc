@@ -1,5 +1,5 @@
 <?php
-// $Id: scheduler.views.inc,v 1.1.2.3 2009/08/26 17:40:44 ericschaefer Exp $
+// $Id: scheduler.views.inc,v 1.1.2.5 2010/12/22 14:28:57 ericschaefer Exp $
 
 /**
  * @file
@@ -26,6 +26,7 @@ function scheduler_views_data() {
     'filter' => array(
       'handler' => 'views_handler_filter_date',
       'label' => t('Publish on'),
+      'allow empty' => TRUE,
     ),
     'sort' => array(
       'handler' => 'views_handler_sort_date',
@@ -42,11 +43,45 @@ function scheduler_views_data() {
     'filter' => array(
       'handler' => 'views_handler_filter_date',
       'label' => t('Unpublish on'),
+      'allow empty' => TRUE,
     ),
     'sort' => array(
       'handler' => 'views_handler_sort_date',
     ),
   );
 
+  $tables['scheduler']['publish_countdown'] = array(
+    'title' => t('Publish countdown'),
+    'help' => t('Time until the article will be automatically published'),
+    'field' => array(
+  	  'handler' => 'scheduler_handler_field_scheduler_countdown',
+      'click sortable' => FALSE,
+      'timestamp_field' => 'publish_on',
+    ),
+  );
+
+  $tables['scheduler']['unpublish_countdown'] = array(
+    'title' => t('Unpublish countdown'),
+    'help' => t('Time until the article will be automatically unpublished'),
+    'field' => array(
+  	  'handler' => 'scheduler_handler_field_scheduler_countdown',
+      'click sortable' => FALSE,
+      'timestamp_field' => 'unpublish_on',
+    ),
+  );
+
   return $tables;
+}
+
+/**
+ * Implementation of hook_views_handlers()
+ */
+function scheduler_views_handlers() {
+  return array(
+    'handlers' => array(
+      'scheduler_handler_field_scheduler_countdown' => array(
+        'parent' => 'views_handler_field',
+      )
+    )
+  );
 }

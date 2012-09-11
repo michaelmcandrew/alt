@@ -1,5 +1,4 @@
 <?php
-// $Id: service_links.api.php,v 1.1.2.2 2010/09/17 12:06:18 thecrow Exp $
 
 /**
  * @file

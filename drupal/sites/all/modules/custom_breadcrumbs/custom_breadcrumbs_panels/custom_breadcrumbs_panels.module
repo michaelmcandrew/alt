@@ -1,5 +1,5 @@
 <?php
-// $Id: custom_breadcrumbs_panels.module,v 1.1.2.6 2010/05/03 22:49:15 mgn Exp $
+// $Id: custom_breadcrumbs_panels.module,v 1.1.2.9 2010/12/30 18:36:25 mgn Exp $
 /**
  * @file
  * Provide custom breadcrumbs for panels pages.
@@ -71,17 +71,58 @@ function custom_breadcrumbs_panels_menu() {
 }
 
 /**
+ * Implements hook_nodeapi().
+ */
+function custom_breadcrumbs_panels_nodeapi($node, $op, $teaser, $page) {
+  static $module_weights = array();
+  if ($op == 'alter' && empty($teaser) && !empty($page) && $node->type == 'panel') {
+    // Loop through content objects and call hook_nodeapi for custom_breadcrumbs
+    // and its submodules for each node object.
+    $display = panels_load_display($node->panels_node['did']);
+    $contents = $display->content;
+    foreach ((array)$contents as $content) {
+      if (isset($content->configuration['nid'])) {
+        $node_context = node_load($content->configuration['nid']);
+        if (empty($module_weights)) {
+          $modules = module_implements('cb_breadcrumb_info');
+          $module_weights = _custom_breadcrumbs_get_module_weight($modules);
+          unset($module_weights['custom_breadcrumbs_panels']);
+        }
+        foreach ($module_weights as $module_name => $weight) {
+          $func = $module_name . '_nodeapi';
+          if (function_exists($func)) {
+            $func($node_context, 'alter', array(), array(1));
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_ctools_render_alter().
  */
 function custom_breadcrumbs_panels_ctools_render_alter($info, $page, $args, $contexts, $task, $subtask) {
   // Don't really do anything with the panel. This is just a pretense to insert a breadcrumb.
+  static $module_weights = array();
 
-  // Is this a node template? 
+  // Is this a node template?
   if (isset($task['admin path']) && ($task['admin path'] == "node/%node")) {
     $context = array_pop($contexts);
     if ($context->type == 'node' && isset ($context->data)) {
       $node = $context->data;
-      custom_breadcrumbs_nodeapi($node, 'alter', array(), array(1));
+      // Call hook_nodeapi for each Custom Breadcrumbs submodule in order of the module's weight.
+      if (empty($module_weights)) {
+        $modules = module_implements('cb_breadcrumb_info');
+        $module_weights = _custom_breadcrumbs_get_module_weight($modules);
+        unset($module_weights['custom_breadcrumbs_panels']);
+      }
+      foreach ($module_weights as $module_name => $weight) {
+        $func = $module_name . '_nodeapi';
+        if (function_exists($func)) {
+          $func($node, 'alter', array(), array(1));
+        }
+      }
       return;
     }
   }
@@ -102,7 +143,7 @@ function custom_breadcrumbs_panels_ctools_render_alter($info, $page, $args, $con
     global $language;
     $languages = array('language' => $language->language, 'all' => '');
     // Check to see if the panel ID matches any custom_breadcrumb panel_id.
-    $id = 'page-'. $subtask['name'];  
+    $id = isset($subtask['name']) ? 'page-' . $subtask['name'] : $task['name'];
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_panels', NULL, array('panel_id' => $id), $languages);
     if (!empty($breadcrumbs)) {
       if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, array('panel' => $info))) {
@@ -164,9 +205,7 @@ function custom_breadcrumbs_panels_form(&$form_state, $type) {
   $pages = array('operations' => array());
   page_manager_get_pages($tasks, $pages);
   foreach ($pages['rows'] as $id => $info) {
-    if (drupal_substr($id, 0, 5) == 'page-') {
-      $options[$id] = $id;
-    }
+    $options[$id] = $id;
   }
   $form['panel_id'] = array(
     '#type'          => 'select',

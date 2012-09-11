@@ -1,14 +1,13 @@
-; $Id: hungarian_services.info,v 1.1.2.1 2010/10/01 07:56:59 thecrow Exp $
 name = "Hungarian Services"
 description = "Provide the Hungarian Service: iWiW"
 core = 6.x
-package = Service Links
+package = Service Links - Services
 dependencies[] = service_links
 
 
-; Information added by drupal.org packaging script on 2010-10-08
-version = "6.x-2.0"
+; Information added by drupal.org packaging script on 2011-10-07
+version = "6.x-2.1"
 core = "6.x"
 project = "service_links"
-datestamp = "1286532364"
+datestamp = "1317978410"
 

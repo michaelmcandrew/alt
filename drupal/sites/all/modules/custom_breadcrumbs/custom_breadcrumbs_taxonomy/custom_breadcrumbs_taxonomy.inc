@@ -1,5 +1,5 @@
 <?php
-// $Id: custom_breadcrumbs_taxonomy.inc,v 1.1.2.16 2010/05/03 22:49:15 mgn Exp $
+// $Id: custom_breadcrumbs_taxonomy.inc,v 1.1.2.19 2010/12/30 18:36:25 mgn Exp $
 
 /**
  * @file
@@ -35,8 +35,8 @@ function custom_breadcrumbs_taxonomy_term_page($str_tids, $callback, $file, $fil
       $terms[$term->tid] = $term;
     }
   }
-  if (is_file($filepath .'/'. $file)) {
-    require_once($filepath .'/'. $file);
+  if (is_file($filepath . '/' . $file)) {
+    require_once($filepath . '/' . $file);
   }
   $output = call_user_func_array($callback, $args);
   _custom_breadcrumbs_taxonomy_set_breadcrumb($tids['tids'][0], NULL, TRUE, array(), $terms);
@@ -255,7 +255,7 @@ function custom_breadcrumbs_taxonomy_generate_breadcrumb($tid, $vid = NULL, $is_
     $term_trail = _custom_breadcrumbs_taxonomy_term_trail($tid, $is_term_page, $objs, $types, count($trail));
     $trail = array_merge($trail, $term_trail);
     // Optionally remove the current TERM from end of breadcrumb trail.
-    if ((!variable_get('custom_breadcrumbs_taxonomy_show_current_term', TRUE) || ($is_term_page && !variable_get('custom_breadcrumbs_taxonomy_show_current_term_term', TRUE))) && (count($trail) > 1)) {
+    if ((!variable_get('custom_breadcrumbs_taxonomy_show_current_term', TRUE) || ($is_term_page && !variable_get('custom_breadcrumbs_taxonomy_show_current_term_term', FALSE))) && (count($trail) > 1)) {
       array_pop($trail);
     }
   }
@@ -323,7 +323,7 @@ function _custom_breadcrumbs_taxonomy_vocabulary_trail($vid, $is_term_page = FAL
   }
   if ($title == NULL) {
     $vocabulary = taxonomy_vocabulary_load($vid);
-    $title = _custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$term->tid:name", $vocabulary->name);
+    $title = _custom_breadcrumbs_taxonomy_tt("taxonomy:vocabulary:$vid:name", $vocabulary->name);
   }
   if ($vocabulary_path != NULL) {
     $options = _custom_breadcrumbs_identifiers_option($part, $bid);

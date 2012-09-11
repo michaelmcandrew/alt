@@ -79,13 +79,15 @@ check the Drupal web site if you need assistance.
 
 ADDITIONAL OPTIONS 
 
-* NodeProfile Import
+* Content Profile Import
 
-If data is to be imported into NodeProfile nodes the following module
+If data is to be imported into Content Profile nodes the following module
 needs to be installed and enabled:
  
   Node Import
-  http://drupal.org/project/node_import
+  http://drupal.org/project/content_profile
+
+Note that Date fields are not yet supported.
 
 
   
@@ -152,9 +154,9 @@ USAGE
          OPTIONS FOR OTHER MODULES
         --------------------------- 
 
--- NODEPROFILE --
+-- CONTENT PROFILE --
 
-* NodeProfile node fields will be available when matching csv data to Drupal fields.  
+* Content Profile node fields will be available when matching csv data to Drupal fields.  
 
 * Date fields are not supported yet.
 
@@ -163,7 +165,7 @@ USAGE
 
 New user imported:
 
-  A NodeProfile node will be created if there is data for that node, if there is no data the node will not be created.
+  A Content Profile node will be created if there is data for that node, if there is no data the node will not be created.
 
 
 
@@ -200,7 +202,7 @@ AUTHOR CONTACT
 ********************************************************************
 ACKNOWLEDGEMENT
 
-- Initial reference point for this module was a script by David McIntosh (neofactor.com).
+- I looked at a script by David McIntosh (neofactor.com) before coding this module.
 - Documentation help Steve (spatz4000)
 - patch by mfredrickson
 - patch by idealso

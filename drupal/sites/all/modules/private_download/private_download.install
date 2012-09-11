@@ -1,5 +1,4 @@
 <?php
-// $Id: private_download.install,v 1.1 2009/08/16 03:22:37 bacteriaman Exp $
 
 /**
  * @file
@@ -11,7 +10,21 @@
  * Implementation of hook_uninstall().
  */
 function private_download_uninstall() {
-  variable_del('private_download_directory');
-  variable_del('private_download_htaccess');
-  variable_del('private_download_header');
+  db_query("DELETE FROM {variable} WHERE name LIKE 'private_download_%%'");
+}
+
+/**
+ * Implementation of hook_update_N().
+ */
+function private_download_update_6001() {
+  global $conf;
+
+  if (isset($conf['private_download_header'])) {
+    $value = str_replace(array("\r\n", "\r"), "\n", $conf['private_download_header']);
+    if ("Content-Transfer-Encoding: binary\nCache-Control: max-age=60, must-revalidate" == $value) {
+      variable_del('private_download_header');
+    }
+  }
+
+  return array();
 }

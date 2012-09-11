@@ -1,15 +1,18 @@
 <?php
-// $Id: favorite_services.module,v 1.1.2.4 2010/09/26 10:49:31 thecrow Exp $
 
 /**
  * @file
  * Provide the bookmarking support for various browser
  */
+
+/**
+ * Implementation of hook_service_links().
+ */
 function favorite_services_service_links() {
   $links['favorite'] = array(
-    'name' => 'Favorite',
+    'name' => t('Favorite'),
     'description' => t('Add this page in your favorites'),
-    'link' => url('', array('absolute' => TRUE, 'query' => '<encoded-url>#<encoded-title>')),
+    'link' => '<url>&favtitle=<raw-encoded-title>',
     'attributes' => array('style' => 'display:none;'),
     'javascript' => 'favorite_services.js',
   );

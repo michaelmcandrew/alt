@@ -61,6 +61,11 @@ function eu_cookie_compliance_admin_form($form_state) {
     '#tree'   => TRUE,
   );
 
+  $form['eu_cookie_compliance_' . $ln]['popup_agreed_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable thank you message'),
+    '#default_value' => ($popup_settings['popup_agreed_enabled']) ? $popup_settings['popup_agreed_enabled'] : 1,
+  );
   $form['eu_cookie_compliance_' . $ln]['popup_agreed']['value'] = array(
     '#type' => 'textarea',
     '#title' => t('Popup message - thanks for giving consent'),

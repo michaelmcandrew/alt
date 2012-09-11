@@ -1,24 +1,30 @@
 <?php
-// $Id: empty_page.install,v 1.1 2010/05/07 20:55:11 nickel Exp $
 
 /**
  *
- *  @file
- *  Installation file.
+ * @file
+ * Installation file.
  *
  */
 
+/**
+ * Implementation of hook_install().
+ */
 function empty_page_install() {
   drupal_install_schema('empty_page');
 }
 
-
+/**
+ * Implementation of hook_uninstall().
+ */
 function empty_page_uninstall() {
   drupal_uninstall_schema('empty_page');
   empty_page_clear_menu_cache();
 }
 
-
+/**
+ * Implementation of hook_schema().
+ */
 function empty_page_schema() {
   $schema['empty_page'] = array(
     'description' => 'The base table for empty_page callbacks.',
@@ -67,4 +73,3 @@ function empty_page_schema() {
   
   return $schema;
 }
-

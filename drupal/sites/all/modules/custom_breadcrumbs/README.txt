@@ -86,8 +86,8 @@ Breadcrumb Visibility
 Users given 'use php in custom breadcrumbs' permission can include a php code
 snippet that returns TRUE or FALSE to control whether or not the breadcrumb is
 displayed. Note that this code has access to the $node variable, and can check
-its type or any other
-property.
+its type or any other property. Tokens should not be used in the visibility
+code snippet, since they will not be replaced.
 
 Special Identifiers
 -------------------
@@ -122,10 +122,13 @@ Summary
 * Fill in the required information for the breadcrumb (varies depending on 
   breadcrumb type, see below).
 * For the titles, put each "crumb" one line after another (There is no need to
-  put in "home"):
+  put in "home")
+* (optional) For each crumb title you can specify a title attribute ("tooltip")
+  to add to the link. Separate the crumb title and the title attribute with a
+  pipe (|) symbol:
 
   Item 1
-  SubItem A
+  SubItem A|Title attribute for SubItemA (optional)
   SuperSubItem X
 
 * For the paths, put the path to each crumb starting after the domain name.
@@ -169,7 +172,11 @@ variety of situations:
   to the selected language. To use '*' as a wildcard, go to custom breadcrumbs
   configuration page at /admin/settings/custom-breadcrumbs and select the
   'Use wildcard pattern matching in paths' option in the advanced settings
-  section.
+  section. When this option is enabled, the breadcrumb that best matches the
+  path will be selected. The best match is determined by the depth at which
+  the first wildcard appears. For example, if the path is path/to/some/content
+  and breadcrumbs have been defined for path/to/* and path/to/some/*, the
+  latter will be chosen as the best match.
 
 + custom_breadcrumbs_taxonomy provides custom breadcrumbs on taxonomy term
   pages, views, and for nodes that are assigned a taxonomy vocabulary or term.
@@ -180,11 +187,11 @@ variety of situations:
   be generated similarly to the taxonomy_breadcrumb module. Otherwise,
   breadcrumb generation will be according to the standard custom breadcrumbs
   approach.
-	     
+
   In taxonomy breadcrumb mode, the breadcrumb trail is automatically
   constructed based on the taxonomy term hierarchy:
   [HOME] >> [VOCABULARY] >> TERM >> [TERM] >> [TITLE]. In this mode the
-  breadcrumb titles are the term and vocabulary names. The paths these  titles
+  breadcrumb titles are the term and vocabulary names. The paths these titles
   are linked to can be assigned via the Term and Vocabulary tabs at
   admin/build/custom_breadcrumbs. Providing a path for a vocabulary will enable
   the [VOCABULARY] portion of the breadcrumb.  The path for a term can
@@ -192,7 +199,9 @@ variety of situations:
   (where tid is a number, the taxonomy term id) will be used. Select the types
   of nodes to include or exclude at the custom breadcrumbs configuration
   settings page. The option to add the node title at the end of the breadcrumb
-  trail can also be enabled on that page.
+  trail can also be enabled on that page. There is also an option to append
+  the current taxonomy term to the breadcrumb on taxonomy term pages
+  (defined to be any page with drupal path */taxonomy/term/*).
 
   In the standard custom breadcrumbs mode, you can provide the titles and paths
   for constructing the breadcrumb trail on nodes that have defined taxonomy
@@ -272,7 +281,10 @@ HOME breadcrumb
 ---------------
 The text to display at beginning of the breadcrumb trail can be assigned from
 the custom breadcrumb configuration settings page. Typically this is Home or
-your site name. You can leave it blank to have no home breadcrumb. There is
+your site name. You can leave it blank to have no home breadcrumb. As with
+normal crumb titles, you can optionally specify a title attribute ("tooltip")
+for the crumb. Just separate the crumb text and the title attribute text with a
+pipe (|) symbol (i.e. Home crumb text|attribute title text). There is
 also an advanced setting to set the Home breadcrumb text on ALL pages, not
 just those with defined custom breadcrumbs. You can also use this feature to
 remove the home breadcrumb on all pages on the site - just enable the advanced
@@ -289,13 +301,15 @@ using the i18n module. Just put this in your settings.php:
 Then you can change it for each language at
 http://example.com/#lang-prefix#/admin/settings/custom-breadcrumbs.
 
+See http://drupal.org/node/313272 for additional information.
+
 Use PHP in breadcrumb titles and paths
 --------------------------------------
 If this advanced option is enabled at admin/settings/custom-breadcrumbs, then
-users given 'use php in custom breadcrumbs' permission can include php code
-snippets in the titles and/or paths fields of the add breadcrumb form. Be
-careful when enabling this option, as the incorrect use of php can break your
-site.
+users given 'use php in custom breadcrumbs' permission can include small php
+code snippets (less than 250 characters)in the titles and/or paths fields of
+the add breadcrumb form. Be careful when enabling this option, as the incorrect
+use of php can break your site.
 
 There are a couple of ways to use php in breadcrumbs and titles. One way is to
 return an array of breadcrumb titles in the titles text field and a
@@ -326,6 +340,11 @@ array is not returned, then the module defaults to the standard operation of
 using each line of the titles and paths text fields to define a part of the
 breadcrumb.
 
+For longer code snippets (greater than 250 characters), you can save your code
+snippet in an include file and use a php require_once statement in the titles
+and/or paths section of your custom breadcrumb to include and evaluate your
+code. See http://drupal.org/node/654766 for an example of this.
+
 Add CSS classes to custom breadcrumb elements
 ---------------------------------------------
 
@@ -351,12 +370,23 @@ In Custom Breadcrumbs 2.0, Special identifiers are now provided as a separate,
 optional module - custom_breadcrumbs_identifiers. At present, this module
 provides the following identifiers:
 
-<pathauto>       - will clean any path using the current pathauto module
-                    settings, if that module is installed.
-<none>           - can be used as a path to have a breadcrumb element that is
-                   not hyperlinked.
-<book-hierarchy> - Provides crumbs for each parent node of a book page.
-<page-title>     - Provides a plain text crumb using the page title.
+<none>              - Produces a plain text crumb. This identifier should not
+                      be used with the pipe (|) symbol.
+<pathauto>          - Cleans the given path using your pathauto replacement
+                      rules.
+<book-hierarchy>    - Provides crumbs for each parent node of a book page.
+                      Whatever is placed in the corresponding position of the
+                      title area will be ignored. It should not be used with
+                      the pipe (|) symbol.
+<page-title>        - Provides a plain text crumb using the page title. Whatever
+                      is placed in the corresponding position of the title area
+                      will be ignored. It should not be used with the pipe (|)
+                      symbol.
+<menu-parent-trail> - Produces crumbs for each parent item for the given path.
+                      The title information for this line will be ignored
+                      because the menu link titles are used. If a path is not
+                      provided following the pipe (|) symbol, the current path
+                      with be used.
 
 Additional special identifiers can be developed and added by contributed
 modules that implement hook_cb_identifier_list(), to provide a description of

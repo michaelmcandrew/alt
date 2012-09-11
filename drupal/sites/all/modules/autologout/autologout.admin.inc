@@ -1,5 +1,4 @@
 <?php
-// $Id: autologout.admin.inc,v 1.1.2.2 2010/05/20 14:33:08 jvandervort Exp $
 
 
 /**
@@ -88,11 +87,12 @@ function autologout_admin_settings() {
   );
 
   $form['autologout']['logout_message']  = array(
-    '#type' => 'textfield',
+    '#type' => 'textarea',
+    '#rows' => 2,
     '#title' => t('Display a message at logout'),
     '#default_value' => _autologout_local_settings('logout_message'),
     '#size' => 40,
-    '#description' => t('If you want to display a message to the users when they are logged out.')
+    '#description' => t('If you want to display a message to the users when they are logged out.  This setting can contain html if needed.')
   );
 
   $form['autologout']['redirect_url']  = array(

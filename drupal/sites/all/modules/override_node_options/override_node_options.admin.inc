@@ -1,5 +1,4 @@
 <?php
-// $Id: override_node_options.admin.inc,v 1.1.2.3 2009/12/27 23:35:09 davereid Exp $
 
 /**
  * @file

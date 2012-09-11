@@ -1,5 +1,5 @@
 <?php
-// $Id: custom_breadcrumbs.install,v 1.3.2.3.2.12 2010/05/03 22:49:15 mgn Exp $
+// $Id: custom_breadcrumbs.install,v 1.3.2.3.2.14 2011/01/08 03:53:17 mgn Exp $
 
 /**
  * @file
@@ -207,4 +207,13 @@ function custom_breadcrumbs_uninstall() {
   variable_del('custom_breadcrumbs_menu_theme');
   variable_del('custom_breadcrumbs_adjust_module_weights');
   variable_del('custom_breadcrumbs_use_php_in_titles');
+  variable_del('custom_breadcrumbs_use_exclude_list');
+  variable_del('custom_breadcrumbs_menu_list');
+  variable_del('custom_breadcrumbs_append_bid_class');
+  variable_del('custom_breadcrumbs_type_class');
+  variable_del('custom_breadcrumbs_even_odd_class');
+  variable_del('custom_breadcrumbs_exclude_list');
+  variable_del('custom_breadcrumbs_home_id');
+  variable_del('custom_breadcrumbs_none_span');
+  variable_del('custom_breadcrumbs_parts_class');
 }

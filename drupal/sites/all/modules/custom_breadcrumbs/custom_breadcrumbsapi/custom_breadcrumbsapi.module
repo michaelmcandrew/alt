@@ -1,5 +1,5 @@
 <?php
-// $Id: custom_breadcrumbsapi.module,v 1.1.2.8 2010/05/03 22:49:15 mgn Exp $
+// $Id: custom_breadcrumbsapi.module,v 1.1.2.9 2010/10/22 15:55:33 mgn Exp $
 /**
  * @file
  * Provide custom breadcrumbs for module pages.
@@ -47,8 +47,8 @@ function _custom_breadcrumbsapi_breadcrumb_name($breadcrumb) {
 function custom_breadcrumbsapi_help($path, $arg) {
   switch ($path) {
     case 'admin/help#custom_breadcrumbsapi':
-      $output = '<p>'. t("Custom Breadcrumbsapi provides a simple api that allows custom breadcrumbs to be defined for module pages that use a theme template or a custom_breadcrumbsapi hook. For the latter, module developers need to provide a <em>moduleName</em>_custom_breadcrumbsapi() function that returns an array containing the names of the module pages for which custom breadcrumbs may be defined. Then, in the callback functions for each of those pages, the following lines needs to be inserted:") .'</p>';
-      $output .= '<p><strong>'. t("drupal_alter('breadcrumb', \$breadcrumb, '<em>module_page_name</em>');") .'</strong></p>';
+      $output = '<p>' . t("Custom Breadcrumbsapi provides a simple api that allows custom breadcrumbs to be defined for module pages that use a theme template or a custom_breadcrumbsapi hook. For the latter, module developers need to provide a <em>moduleName</em>_custom_breadcrumbsapi() function that returns an array containing the names of the module pages for which custom breadcrumbs may be defined. Then, in the callback functions for each of those pages, the following lines needs to be inserted:") . '</p>';
+      $output .= '<p><strong>' . t("drupal_alter('breadcrumb', \$breadcrumb, '<em>module_page_name</em>');") . '</strong></p>';
       $output .= t('within the function, preferably after defining $breadcrumb but before setting the breadcrumb.');
       return $output;
   }
@@ -96,8 +96,8 @@ function custom_breadcrumbsapi_breadcrumb_alter($breadcrumb, $modulepage, $objs 
   $languages = array('language' => $language->language, 'all' => '');
   $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbsapi', NULL, array('module_page' => $modulepage), $languages);
   if (!empty($breadcrumbs)) {
-    if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs)) {
-      custom_breadcrumbs_set_breadcrumb($breadcrumb);
+    if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $objs)) {
+      custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs);
       // Return the modified breadcrumb which has now been set.
       $breadcrumb = drupal_get_breadcrumb();
     }
@@ -137,7 +137,7 @@ function custom_breadcrumbsapi_form(&$form_state, $type) {
   // Include all module functions specified in hook_custom_breadcrumbsapi.
   $modules = module_implements('custom_breadcrumbsapi');
   foreach ($modules as $module) {
-    $func = $module .'_custom_breadcrumbsapi';
+    $func = $module . '_custom_breadcrumbsapi';
     $names = $func();
     foreach ($names as $name) {
       $options[$name] = $name;
@@ -180,8 +180,9 @@ function  custom_breadcrumbsapi_preprocess(&$variables, $hook) {
     $languages = array('language' => $language->language, 'all' => '');
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbsapi', NULL, array('module_page' => $hook), $languages);
     if (!empty($breadcrumbs)) {
-      if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, array('variables' => $variables))) {
-        custom_breadcrumbs_set_breadcrumb($breadcrumb, array('variables' => $variables));
+      $objs = (isset($variables) && is_array($variables)) ? $variables : array();
+      if ($breadcrumb = custom_breadcrumbs_select_breadcrumb($breadcrumbs, $objs)) {
+        custom_breadcrumbs_set_breadcrumb($breadcrumb, $objs);
         $variables['breadcrumb'] = theme('breadcrumb', drupal_get_breadcrumb());
       }
     }

@@ -1,13 +1,12 @@
-; $Id: dutch_services.info,v 1.1.2.1 2010/09/18 11:43:08 thecrow Exp $
 name = "Dutch Services"
 description = "Provide the Dutch Services: eKudos, Hyves, Nujij"
 core = 6.x
-package = Service Links
+package = Service Links - Services
 dependencies[] = service_links
 
-; Information added by drupal.org packaging script on 2010-10-08
-version = "6.x-2.0"
+; Information added by drupal.org packaging script on 2011-10-07
+version = "6.x-2.1"
 core = "6.x"
 project = "service_links"
-datestamp = "1286532364"
+datestamp = "1317978410"
 

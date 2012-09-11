@@ -1,5 +1,4 @@
 <?php
-// $Id: autologout.install,v 1.3.2.1 2009/08/18 14:57:23 jvandervort Exp $
 /**
  * @file
  * Install file for Automated Logout Module

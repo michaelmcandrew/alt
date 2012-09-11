@@ -1,5 +1,5 @@
 <?php
-// $Id: custom_breadcrumbs.admin.inc,v 1.1.2.3.2.27 2010/05/03 22:49:15 mgn Exp $
+// $Id: custom_breadcrumbs.admin.inc,v 1.1.2.3.2.33 2011/01/08 03:32:24 mgn Exp $
 /**
  * @file
  * Admin page callback file for the custom_breadcrumbs module.
@@ -61,18 +61,17 @@ function custom_breadcrumbs_page() {
   // Add an arrow indicating sort direction.
   $image = array($order => theme('tablesort_indicator', $sort[$order]));
 
-  $header = array(); 
+  $headers = array(); 
   foreach ($columns as $key => $title) {
     $options = array('attributes' => array('title' => t('sort by @s', array('@s' => $title))));
-    $options['query'] = 'order='. $key .'&sort='. $sort[$key];
+    $options['query'] = 'order=' . $key . '&sort=' . $sort[$key];
     if (isset($image[$key])) {
       $options['html'] = TRUE;
       $title .= $image[$key];
     }
-    $header[$key] = array('data' => l($title, $path, $options));
+    $headers[] = array('data' => l($title, $path, $options));
   }
-  $header[$order]['class'] = 'active';
-  $header['operations'] = t('Operations');
+  $headers[] = t('Operations');
   $rows = array();
   foreach ($breadcrumbs as $breadcrumb) {
     $row = array();
@@ -92,7 +91,7 @@ function custom_breadcrumbs_page() {
   }
 
   $output =  drupal_get_form('custom_breadcrumbs_filter_form'); 
-  $output .= theme('table', $header, $rows);
+  $output .= theme('table', $headers, $rows);
   return $output;
 }
 
@@ -168,13 +167,13 @@ function custom_breadcrumbs_form(&$form_state, $type) {
     $options[$type] = $name;
   }
   $form['node_type'] = array(
-    '#type' => 'select',
-    '#title' => t('Node type'),
-    '#required' => TRUE,
-    '#options' => $options,
-    '#description' => t('The node type this custom breadcrumb trail will apply to.'),
+    '#type'          => 'select',
+    '#title'         => t('Node type'),
+    '#required'      => TRUE,
+    '#options'       => $options,
+    '#description'   => t('The node type this custom breadcrumb trail will apply to.'),
     '#default_value' => isset($breadcrumb->node_type) ? $breadcrumb->node_type : NULL,
-    '#weight' => -10,
+    '#weight'        => -10,
   );
   // Store information needed to save this breadcrumb.
   $form['#module'] = 'custom_breadcrumbs';
@@ -265,8 +264,9 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#description'   => t('This name will only appear when listing custom breadcrumbs. If left blank, a name for this breadcrumb will be generated for you.'),
     '#weight'        => -50,
   );
-
-  $cbid = custom_breadcrumbs_unique_breadcrumb_id($breadcrumb->breadcrumb_type, $breadcrumb->bid);
+  if (isset($breadcrumb)) {
+    $cbid = custom_breadcrumbs_unique_breadcrumb_id($breadcrumb->breadcrumb_type, $breadcrumb->bid);
+  }
   if (isset($cbid)) {
     $form['classid'] = array(
       '#value'       => '<strong>'. t('The CSS class name for this breadcrumb is !name', array('!name' => $cbid)) .'</strong>',
@@ -290,13 +290,13 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
     '#type'          => 'textarea',
     '#title'         => t('Breadcrumb visibility'),
     '#access'        => user_access('use php in custom breadcrumbs'),
-    '#description'   => t('Determine whether this breadcrumb should be displayed by using a PHP snippet to return TRUE or FALSE. Note that this code has access to the $node variable, and can check its type or any other property.'),
+    '#description'   => t('Determine whether this breadcrumb should be displayed by using a PHP snippet to return TRUE or FALSE. Note that this code has access to the $node variable, and can check its type or any other property. Do not use opening and closing php tags.'),
     '#default_value' => isset($breadcrumb->visibility_php) ? $breadcrumb->visibility_php : '',
   );
 
- $description = t('A list of titles for the breadcrumb links, one on each line.');
+ $description = t('A list of titles for the breadcrumb links, one on each line. For each crumb title you can also specify a title attribute to add to the link. Separate the crumb title and the title attribute with a pipe (|) symbol.');
   if (variable_get('custom_breadcrumbs_use_php_in_titles', FALSE) && user_access('use php in custom breadcrumbs')) {
-    $description .= ' '. t("Or, you can enter a PHP code snippet returning either an array of text strings for the breadcrumb titles, with one title per array element, or an associative array with elements 'titles' and 'paths' each containing an array of text strings for the breadcrumb titles and paths, respectively. Include the snippet between %php. Use with caution since incorrect PHP code can break your Drupal site. Token replacement will occur after any PHP is evaluated.", array('%php' => '<?php ?>'));
+    $description .= ' '. t("Or, you can enter a small PHP code snippet (less than 250 characters) returning either an array of text strings for the breadcrumb titles, with one title per array element, or an associative array with elements 'titles' and 'paths' each containing an array of text strings for the breadcrumb titles and paths, respectively. Include the snippet between %php. Use with caution since incorrect PHP code can break your Drupal site. Token replacement will occur after any PHP is evaluated.", array('%php' => '<?php ?>'));
   } 
 
  $form['titles'] = array(
@@ -309,7 +309,7 @@ function custom_breadcrumbs_common_form_elements($bid, $breadcrumb) {
 
   $description = t('A list of Drupal paths for the breadcrumb links, one on each line.');
   if (variable_get('custom_breadcrumbs_use_php_in_titles', FALSE) && user_access('use php in custom breadcrumbs')) {
-    $description .= ' '. t("You can also enter a PHP code snippet returning an array of drupal paths for the breadcrumb links, with one path per array element. Include the snippet between %php. Use with caution since incorrect PHP code can break your Drupal site.  Token replacement will occur after any PHP is evaluated.", array('%php' => '<?php ?>'));
+    $description .= ' '. t("You can also enter a small PHP code snippet (less than 250 characters) returning an array of drupal paths for the breadcrumb links, with one path per array element. Include the snippet between %php. Use with caution since incorrect PHP code can break your Drupal site. Token replacement will occur after any PHP is evaluated.", array('%php' => '<?php ?>'));
   }
   $form['paths'] = array(
     '#type'          => 'textarea',
@@ -384,7 +384,7 @@ function custom_breadcrumbs_admin_settings() {
     '#type'          => 'textfield',
     '#title'         => t('Home breadcrumb text'),
     '#default_value' => variable_get('custom_breadcrumb_home', t('Home')),
-    '#description'   => t('This text will be displayed as the first item of the breadcrumb trail. Typically Home or your site name. Leave blank to have no home breadcrumb.'),
+    '#description'   => t('This text will be displayed as the first item of the breadcrumb trail. Typically Home or your site name. Leave blank to have no home breadcrumb. You can also specify a title attribute (tooltip text) to add to the link. Just separate the crumb text and the title attribute text with a pipe (|) symbol (i.e. Home crumb text|attribute title text).'),
   );
 
   $form['settings']['custom_breadcrumbs_menu_structure'] = array(
@@ -435,7 +435,7 @@ function custom_breadcrumbs_admin_settings() {
     '#type'          => 'checkbox',
     '#title'         => t('Allow the use of PHP to set titles and paths'),
     '#default_value' => variable_get('custom_breadcrumbs_use_php_in_titles', FALSE),
-    '#description'   => t("If enabled, PHP code snippets can be used in the titles and paths section of the create breadcrumb forms. Each should return an array with text strings for each part of the crumb. Alternatively, a PHP code snippet placed in the titles box can return an associative array with elements 'titles' and 'paths', each an array of text strings. If this is done, the paths text field will be ignored."),
+    '#description'   => t("If enabled, small PHP code snippets (less than 250 characters) can be used in the titles and paths section of the create breadcrumb forms. Each should return an array with text strings for each part of the crumb. Alternatively, a PHP code snippet placed in the titles box can return an associative array with elements 'titles' and 'paths', each an array of text strings. If this is done, the paths text field will be ignored."),
     '#weight'        => -35,
   );
 
@@ -599,9 +599,9 @@ function custom_breadcrumbs_module_weight() {
   $modules = module_implements('cb_breadcrumb_info');
   $form = array('#tree' => TRUE);
   $module_id = 0;
-  foreach ($modules as $module) {
-    $weight = _custom_breadcrumbs_get_module_weight($module);
-    $info = drupal_parse_info_file(drupal_get_path('module', $module) .'/'. $module .'.info');
+  $weights = _custom_breadcrumbs_get_module_weight($modules);
+  foreach ($weights as $module => $weight) {
+    $info = drupal_parse_info_file(drupal_get_path('module', $module) . '/' . $module . '.info');
     $form[$module_id]['#weight'] = $weight;
     $form[$module_id]['#module'] = $module;
     $form[$module_id]['name'] = array('#value' => check_plain($info['name']));

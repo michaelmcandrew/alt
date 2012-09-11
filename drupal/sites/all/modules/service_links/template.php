@@ -1,5 +1,4 @@
 <?php
-// $Id: template.php,v 1.3.4.5 2010/10/04 16:11:15 thecrow Exp $
 
 /**
  * @file
@@ -46,14 +45,14 @@ function themename_preprocess_node(&$vars) {
 function themename_preprocess(&$vars, $hook) {
   switch ($hook) {
     case 'node':
-      if module_exists('service_links') {
+      if (module_exists('service_links')) {
         if (user_access('access service links') && service_links_show($vars['node'])) {
           $vars['twitter'] = theme('links', array($vars['node']->service_links['service-links-twitter']));
         }
       }
       break;
     case 'page':
-      if module_exists('service_links') {
+      if (module_exists('service_links')) {
         if (user_access('access service links') && service_links_show($vars['node'])) {
           $vars['service_links'] = theme('links', service_links_render($vars['node'], TRUE));
         }

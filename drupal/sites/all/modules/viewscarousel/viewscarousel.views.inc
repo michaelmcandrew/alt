@@ -1,5 +1,4 @@
 <?php
-// $Id: viewscarousel.views.inc,v 1.1.2.1 2009/04/07 17:09:32 robloach Exp $
 /**
  * @file
  *  Provides the views plugin information.

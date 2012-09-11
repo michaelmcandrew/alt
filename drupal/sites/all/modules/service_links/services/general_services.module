@@ -1,9 +1,8 @@
 <?php
-// $Id: general_services.module,v 1.1.2.14 2010/09/26 10:49:31 thecrow Exp $
 
 /**
  * @file
- * Services most used and supported from the start by Service Links module
+ * Services most used and supported from the start by Service Links module.
  */
 
 /**
@@ -31,17 +30,12 @@ function general_services_service_links() {
   $links['twitter'] = array(
     'name' => 'Twitter',
     'description' => t('Share this on Twitter'),
-    'link' => 'http://twitter.com/home/?status=<encoded-short-url>+--+<encoded-title>',
+    'link' => 'http://twitter.com/share?url=<raw-encoded-short-url>&text=<raw-encoded-title>',
   );
   $links['pingthis'] = array(
     'name' => 'Ping This!',
     'link' => 'http://ping.fm/ref/?link=<encoded-url>&title=<encoded-title>&body=<encoded-teaser>',
     'description' => t('Submit to Ping.fm.'),
-  );
-  $links['propeller'] = array(
-    'name' => 'Propeller',
-    'link' => 'http://www.propeller.com/submit/?U=<encoded-url>&T=<encoded-title>',
-    'description' => t('Submit to Propeller.'),
   );
   $links['reddit'] = array(
     'name' => 'Reddit',
@@ -52,11 +46,6 @@ function general_services_service_links() {
     'name' => 'SlashDot',
     'link' => 'http://slashdot.org/bookmark.pl?url=<encoded-url>&title=<encoded-title>',
     'description' => t('Bookmark this post on SlashDot'),
-  );
-  $links['magnoliacom'] = array(
-    'name' => 'Magnoliacom',
-    'link' => 'http://ma.gnolia.com/bookmarklet/add?url=<encoded-url>&title=<encoded-title>',
-    'description' => t('Submit this post on ma.gnolia.com.'),
   );
   $links['newsvine'] = array(
     'name' => 'Newsvine',
@@ -88,20 +77,21 @@ function general_services_service_links() {
     'link' => 'http://bookmarks.yahoo.com/myresults/bookmarklet?u=<encoded-url>&t=<encoded-title>',
     'description' => t('Bookmark this post on Yahoo.'),
   );
-  $links['buzz'] = array(
-    'name' => 'Buzz Up!',
-    'link' => 'http://buzz.yahoo.com/buzz?targetUrl=<encoded-url>&headline=<encoded-title>&summary=<encoded-teaser>',
-    'description' => t('Buzz up this post on Yahoo! Buzz.'),
-  );
   $links['linkedin'] = array(
     'name' => 'LinkedIn',
-    'link' => 'http://www.linkedin.com/shareArticle?mini=true&url=<encoded-url>&title=<encoded-title>&summary=<encoded-teaser>&source=<source>',
+    'link' => 'http://www.linkedin.com/shareArticle?mini=true&url=<encoded-url>&title=<encoded-title>&summary=<encoded-teaser>&source=<encoded-source>',
     'description' => t('Publish this post to LinkedIn'),
   );
   $links['technorati'] = array(
     'name' => 'Technorati',
     'link' => 'http://technorati.com/search/<encoded-url>',
     'description' => t('Search Technorati for links to this post.'),
+  );
+  $links['technorati_favorite'] = array(
+    'name' => 'Favorite on Technorati',
+    'link' => 'http://technorati.com/faves?sub=addfavbtn&add=<encoded-url>',
+    'description' => t('Add this post to your Technorati Favorites.'),
+    'icon' => 'technorati.png',
   );
   $links['icerocket'] = array(
     'name' => 'Icerocket',
@@ -137,6 +127,16 @@ function general_services_service_links() {
     'name' => 'identi.ca',
     'link' => 'http://identi.ca/?action=newnotice&status_textarea=<encoded-title>+<encoded-url>',
     'description' => t('Dent this on identi.ca.'),
+  );
+  $links['newskicks'] = array(
+    'name' => 'Newskicks',
+    'link' => 'http://newskicks.com/submit.php?url=<encoded-url>',
+    'description' => t('Kicks this post on NewsKicks.'),
+  );
+  $links['diigo'] = array(
+    'name' => 'Diigo',
+    'description' => t('Post on Diigo'),
+    'link' => 'http://www.diigo.com/post?url=<encoded-url>&title=<encoded-title>&desc=<encoded-teaser>',
   );
 
   return $links;

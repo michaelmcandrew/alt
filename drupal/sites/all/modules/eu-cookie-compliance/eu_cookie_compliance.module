@@ -50,6 +50,7 @@ function eu_cookie_compliance_footer() {
     $clicking_confirmation = (isset($popup_settings['popup_clicking_confirmation']))? $popup_settings['popup_clicking_confirmation'] : TRUE ;
     $variables = array(
       'popup_enabled' => $popup_settings['popup_enabled'],
+      'popup_agreed_enabled' => $popup_settings['popup_agreed_enabled'],
       'popup_clicking_confirmation' => $clicking_confirmation,
       'popup_html_info' => $html_info,
       'popup_html_agreed' => $html_agreed,

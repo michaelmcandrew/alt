@@ -1,5 +1,5 @@
 <?php
-// $Id: custom_breadcrumbs_taxonomy.module,v 1.1.2.21 2010/05/03 22:49:15 mgn Exp $
+// $Id: custom_breadcrumbs_taxonomy.module,v 1.1.2.26 2010/12/30 18:36:25 mgn Exp $
 
 /**
  * @file
@@ -168,8 +168,7 @@ function custom_breadcrumbs_taxonomy_nodeapi($node, $op, $teaser, $page) {
  */
 function custom_breadcrumbs_taxonomy_menu_alter(&$callbacks) {
   // This will not work if views or panels has overriden taxonomy/term/%
-  if (isset($callbacks['taxonomy/term/%']) && ($callbacks['taxonomy/term/%']['page callback'] != 'views_page')
-    && ($callbacks['taxonomy/term/%']['page callback'] != 'page_manager_term_view')) {
+  if (isset($callbacks['taxonomy/term/%']) && ($callbacks['taxonomy/term/%']['page callback'] != 'views_page')) {
     $term_callback = &$callbacks['taxonomy/term/%'];
     $callback = $term_callback['page callback'];
     $arguments = $term_callback['page arguments'];
@@ -190,7 +189,12 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
     // Set the taxonomy breadcrumb for the view.
     if (isset($view->display) && !empty($view->display)) {
       $curpath = drupal_get_normal_path($_GET['q']);
-      $is_term_page = ((arg(0, $curpath) == 'taxonomy') && (arg(1, $curpath) == 'term'));
+      // A taxonomy term page is any page with path a component 'taxonomy' followed by 'term'.
+      $arg_values = arg(NULL, $curpath);
+      $is_term_page = FALSE;
+      if (($key = array_search('taxonomy', $arg_values)) !== FALSE) {
+        $is_term_page = (isset($arg_values[$key + 1]) && $arg_values[$key + 1] == 'term');
+      }
       foreach ($view->display as $id => $display) {
         // Identify allowed displays for breadcrumb replacement.
         if (!_custom_breadcrumbs_allowed_display($display)) continue;
@@ -270,21 +274,21 @@ function custom_breadcrumbs_taxonomy_views_pre_render(&$view) {
 function custom_breadcrumbs_taxonomy_help($path, $arg) {
   switch ($path) {
     case 'admin/help#custom_breadcrumbs_taxonomy':
-         $output = '<p>'. t('The custom_breadcrumbs_taxonomy module generates taxonomy-based breadcrumbs on node pages and taxonomy/term pages. The breadcrumb trail takes on the form:') . '</p>';
-      $output .= '<p>'. t('[HOME] >> [VOCABULARY] >> TERM >> [TERM] ...') . '</p>';
+         $output = '<p>' . t('The custom_breadcrumbs_taxonomy module generates taxonomy-based breadcrumbs on node pages and taxonomy/term pages. The breadcrumb trail takes on the form:') . '</p>';
+      $output .= '<p>' . t('[HOME] >> [VOCABULARY] >> TERM >> [TERM] ...') . '</p>';
 
       $output .= '<ul>';
-      $output .= '<li>'. t('The text displayed for HOME is configurable below. The <em>HOME</em> breadcrumb (if present) links to the homepage. The text displayed for HOME is configurable by an administrator. If the HOME breadcrumb is not defined by the administrator, it will not appear in the breadcrumb trail.') .'</li>';
-      $output .= '<li>'. t('The <em>VOCABULARY</em> breadcrumb (if present) will link to an administrator defined page. If the VOCABULARY does not have an administrator defined page, it will not appear in the breadcrumb trail. This can be configured on the add/edit vocabulary pages within <a href="@taxonomy">administer >> categories</a> (taxonomy).', array('@taxonomy' => url('admin/content/taxonomy'))) .'</li>';
-      $output .= '<li>'. t('Each <em>TERM</em> breadcrumb will link to either (1) taxonomy/term/tid by default, or (2) an administrator defined page if one is defined for the term. This can be configured on the add/edit term pages within <a href="@taxonomy">administer >> categories</a> (taxonomy).', array('@taxonomy' => url('admin/content/taxonomy'))) .'</li>';
+      $output .= '<li>' . t('The text displayed for HOME is configurable below. The <em>HOME</em> breadcrumb (if present) links to the homepage. The text displayed for HOME is configurable by an administrator. If the HOME breadcrumb is not defined by the administrator, it will not appear in the breadcrumb trail.') . '</li>';
+      $output .= '<li>' . t('The <em>VOCABULARY</em> breadcrumb (if present) will link to an administrator defined page. If the VOCABULARY does not have an administrator defined page, it will not appear in the breadcrumb trail. This can be configured on the add/edit vocabulary pages within <a href="@taxonomy">administer >> categories</a> (taxonomy).', array('@taxonomy' => url('admin/content/taxonomy'))) . '</li>';
+      $output .= '<li>' . t('Each <em>TERM</em> breadcrumb will link to either (1) taxonomy/term/tid by default, or (2) an administrator defined page if one is defined for the term. This can be configured on the add/edit term pages within <a href="@taxonomy">administer >> categories</a> (taxonomy).', array('@taxonomy' => url('admin/content/taxonomy'))) . '</li>';
       $output .= '</ul>';
 
-      $output .= '<h3>'. t('Examples:') .'</h3>';
+      $output .= '<h3>' . t('Examples:') . '</h3>';
       $output .= '<ul>';
-      $output .= '<li>'. t('home >> term >> term') .'</li>';
-      $output .= '<li>'. t('mysite >> term >> term') .'</li>';
-      $output .= '<li>'. t('home >> vocabulary >> term >> term') .'</li>';
-      $output .= '<li>'. t('vocabulary >> term >> term') .'</li>';
+      $output .= '<li>' . t('home >> term >> term') . '</li>';
+      $output .= '<li>' . t('mysite >> term >> term') . '</li>';
+      $output .= '<li>' . t('home >> vocabulary >> term >> term') . '</li>';
+      $output .= '<li>' . t('vocabulary >> term >> term') . '</li>';
       $output .= '</ul>';
 
       return $output;
@@ -404,8 +408,8 @@ function custom_breadcrumbs_taxonomy_form_taxonomy_form_vocabulary_alter(&$form,
   $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_vocabulary', array('vid' => $form['vid']['#value']));
   $output = NULL;
   if (count($breadcrumbs) > 0) {
-    $output = '<p>'. t('Custom breadcrumbs have been created for this vocabulary. Use the !link to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('!link' => l('Custom Breadcrumbs Administration Page', 'admin/build/custom_breadcrumbs'))) .'</p>';
-  } 
+    $output = '<p>' . t('Custom breadcrumbs have been created for this vocabulary. Use the !link to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('!link' => l('Custom Breadcrumbs Administration Page', 'admin/build/custom_breadcrumbs'))) . '</p>';
+  }
   // Show a table of custom breadcrumbs with links to the edit form.
   $output .= custom_breadcrumbs_simple_breadcrumb_table($breadcrumbs);
   $form['custom_breadcrumbs_taxonomy_vocabulary'] = array(
@@ -427,7 +431,7 @@ function custom_breadcrumbs_taxonomy_form_taxonomy_form_term_alter(&$form, &$for
     $breadcrumbs = custom_breadcrumbs_load_breadcrumbs('custom_breadcrumbs_taxonomy', 'custom_breadcrumbs_taxonomy_term', array('tid' => $form['tid']['#value']));
     $output = NULL;
     if (count($breadcrumbs) > 0) {
-      $output = '<p>'. t('Custom breadcrumbs have been created for this term. Use the <a href="@link">Custom Breadcrumbs Administration Page</a> to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('@link' => url('admin/build/custom_breadcrumbs'))) .'</p>';
+      $output = '<p>' . t('Custom breadcrumbs have been created for this term. Use the <a href="@link">Custom Breadcrumbs Administration Page</a> to add additional breadcrumbs. Or follow the links in the table below to edit or delete existing custom breadcrumbs.', array('@link' => url('admin/build/custom_breadcrumbs'))) . '</p>';
     }
     // Show a table of custom breadcrumbs with links to the edit form.
     $output .= custom_breadcrumbs_simple_breadcrumb_table($breadcrumbs);
@@ -504,7 +508,7 @@ function _custom_breadcrumbs_taxonomy_allowed_node_type($nodetype) {
 function custom_breadcrumbs_taxonomy_enable() {
   // Sets weight of custom_breadcrumbs_taxonomy to be greater than taxonomy, views, and custom_breadcrumbs.
   $max_weight = custom_breadcrumbs_taxonomy_minimum_module_weight();
-  $current_weight =  _custom_breadcrumbs_get_module_weight('custom_breadcrumbs_taxonomy');
+  $current_weight =  _custom_breadcrumbs_get_module_weight(array('custom_breadcrumbs_taxonomy'));
   if ($current_weight < $max_weight) {
     drupal_set_message(t('Increasing the weight of custom_breadcrumbs_taxonomy for use with other modules.'));
     db_query("UPDATE {system} SET weight = %d WHERE name = 'custom_breadcrumbs_taxonomy'", $max_weight);
@@ -518,10 +522,8 @@ function custom_breadcrumbs_taxonomy_enable() {
  * @see custom_breadcrumbs_admin_settings_submit().
  */
 function custom_breadcrumbs_taxonomy_minimum_module_weight() {
-  $modules = array('taxonomy', 'views', 'page_manager', 'custom_breadcrumbs');
-  foreach ($modules as $module) {
-    $weight[] = _custom_breadcrumbs_get_module_weight($module);
-  }
-  $max_weight = max($weight);
+  $modules = array('taxonomy', 'views', 'page_manager', 'custom_breadcrumbs', 'i18ntaxonomy');
+  $weights = _custom_breadcrumbs_get_module_weight($modules);
+  $max_weight = array_pop($weights);
   return $max_weight + 1;
 }

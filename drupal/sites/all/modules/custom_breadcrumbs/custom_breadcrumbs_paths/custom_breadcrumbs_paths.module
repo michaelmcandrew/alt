@@ -1,5 +1,5 @@
 <?php
-// $Id: custom_breadcrumbs_paths.module,v 1.1.2.22 2010/05/03 22:49:15 mgn Exp $
+// $Id: custom_breadcrumbs_paths.module,v 1.1.2.26 2010/12/30 18:36:25 mgn Exp $
 
 /**
  * @file
@@ -67,12 +67,16 @@ function custom_breadcrumbs_paths_menu() {
 }
 
 /**
- * Implements hook_preprocess().
+ * Implements hook_preprocess_page().
  */
-function custom_breadcrumbs_paths_preprocess(&$variables, $hook) {
-  // Check for a match to cover module callback pages.
-  // Can't do token replacement without context.
-  _custom_breadcrumbs_paths_set_breadcrumb();
+function custom_breadcrumbs_paths_preprocess_page(&$variables) {
+  if (!custom_breadcrumbs_exclude_path()) {
+    $objs = (isset($variables) && is_array($variables)) ? $variables : array();
+    // Check for a match to provide custom breadcrumbs on module callback pages.
+    if (_custom_breadcrumbs_paths_set_breadcrumb($objs)) {
+      $variables['breadcrumb'] = theme('breadcrumb', drupal_get_breadcrumb());
+    }
+  }
 }
 
 /**
@@ -81,7 +85,8 @@ function custom_breadcrumbs_paths_preprocess(&$variables, $hook) {
 function custom_breadcrumbs_paths_nodeapi($node, $op, $teaser, $page) {
   if ($op == 'alter' && empty($teaser) && !empty($page)) {
     // Check for breadcrumb at this path and set if a match is found.
-    _custom_breadcrumbs_paths_set_breadcrumb(array('node' => $node));
+    // Nodes have higher priority than views and theme templates.
+    _custom_breadcrumbs_paths_set_breadcrumb(array('node' => $node), 3);
   }
 }
 
@@ -101,7 +106,8 @@ function custom_breadcrumbs_paths_views_pre_render(&$view) {
   }
   if ($viewpage) {
     // Check for breadcrumb at this path and set if a match is found.
-    _custom_breadcrumbs_paths_set_breadcrumb(array('view' => $view));
+    // Views have a higher priority than theme templates, but lower than nodes.
+    _custom_breadcrumbs_paths_set_breadcrumb(array('view' => $view), 2);
   }
 }
 
@@ -110,34 +116,52 @@ function custom_breadcrumbs_paths_views_pre_render(&$view) {
  *
  * @param $objs
  *    An array of objects to be used in token replacement. Array keys indicate type of object.
+ * @param $priority
+ *    An integer indicating whether this attempt should override previous attempts.
+ *    The lowest priority is 1. Higher values are given priority over lower values.
  */
-function _custom_breadcrumbs_paths_set_breadcrumb($objs = array()) {
-  $matchpath = variable_get('custom_breadcrumbs_paths_allow_wildcards', FALSE);
-  $breadcrumbs = _custom_breadcrumbs_paths_get_breadcrumbs($matchpath);
-  if (!empty($breadcrumbs)) {
-    foreach ($breadcrumbs as $id => $breadcrumb) {
-      if ((!$matchpath) || _custom_breadcrumbs_paths_page_match($breadcrumb)) {
-        if (custom_breadcrumbs_is_visible($breadcrumb, $objs)) {
-          if ($matchpath) {
-            $num = substr_count($breadcrumb->specific_path, '*');
-            if (!isset($min) || (isset($min) && ($num < $min))) {
-                $min = $num;
-                $min_id = $id;
+function _custom_breadcrumbs_paths_set_breadcrumb($objs = array(), $priority = 1) {
+  static $success;
+  // Allow a higher priority request to take precedence.
+  if (!isset($success) || ($priority > $success)) {
+    $matchpath = variable_get('custom_breadcrumbs_paths_allow_wildcards', FALSE);
+    $breadcrumbs = _custom_breadcrumbs_paths_get_breadcrumbs($matchpath);
+    if (!empty($breadcrumbs)) {
+      foreach ($breadcrumbs as $id => $breadcrumb) {
+        if ((!$matchpath) || _custom_breadcrumbs_paths_page_match($breadcrumb)) {
+          if (custom_breadcrumbs_is_visible($breadcrumb, $objs)) {
+            if ($matchpath) {
+              // Assume a longer path match is a better fit than a prior shorter match.
+              if (($pos = strrpos($breadcrumb->specific_path, '*')) !== FALSE) {
+                if (!isset($max) || (isset($max) && ($pos > $max))) {
+                  $max = $pos;
+                  $max_id = $id;
+                }
+              }
+              else {
+                // No wildcards in this breadcrumb, so its a direct match.
+                $max_id = $id;
+                // Don't check any others once a visible breadcrumb is found.
+                break;
+              }
             }
-            if ($num == 0) break;
-          }
-          else {
-            $min_id = $id;
-            // Don't check any others once a visible breadcrumb is found.
-            break;
+            else {
+              // Wildcards are not allowed, so this must be a direct match.
+              $max_id = $id;
+              // Don't check any others once a visible breadcrumb is found.
+              break;
+            }
           }
         }
       }
-    }
-    if (isset($min_id)) {
-      custom_breadcrumbs_set_breadcrumb($breadcrumbs[$min_id], $objs);
+      if (isset($max_id)) {
+        custom_breadcrumbs_set_breadcrumb($breadcrumbs[$max_id], $objs);
+        $success = $priority;
+        return TRUE;
+      }
     }
   }
+  return FALSE;
 }
 
 /**
@@ -184,13 +208,13 @@ function _custom_breadcrumbs_paths_page_match($breadcrumb) {
   if (isset($_REQUEST['q'])) {
     if (isset($breadcrumb->language) && $breadcrumb->language != '') {
       // Check for a match on the prefixed path.
-      $path = $breadcrumb->language .'/'. $breadcrumb->specific_path;
+      $path = $breadcrumb->language . '/' . $breadcrumb->specific_path;
       $page_match = _custom_breadcrumbs_match_path($_REQUEST['q'], $path);
     }
     else {
       // Append the current language if the breadcrumb language is 'All'.
       global $language;
-      $path = $language->language .'/'. $breadcrumb->specific_path;
+      $path = $language->language . '/' . $breadcrumb->specific_path;
       $page_match = _custom_breadcrumbs_match_path($_REQUEST['q'], $path);
     }
     if (!$page_match) {
@@ -243,7 +267,7 @@ function custom_breadcrumbs_paths_form(&$form_state, $type) {
   }
   $description = t('The Drupal path that this custom breadcrumb trail will apply to.');
   if (variable_get('custom_breadcrumbs_paths_allow_wildcards', FALSE)) {
-    $description .= ' '. t("The '*' character can be used as a wildcard to set a custom breadcrumb for all matching paths. For example, foo/bar* could be used to match every page with a path beginning with foo/bar. Do not include language prefixes in the path. This will be handled automatically according to the selected language.");
+    $description .= ' ' . t("The '*' character can be used as a wildcard to set a custom breadcrumb for all matching paths. For example, foo/bar* could be used to match every page with a path beginning with foo/bar. Do not include language prefixes in the path. This will be handled automatically according to the selected language.");
   }
   $form['specific_path'] = array(
     '#type'          => 'textfield',

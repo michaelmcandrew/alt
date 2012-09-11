@@ -9,8 +9,9 @@ License - GPL (see LICENSE)
 
 Overview:
 ---------
-The service links module enables admins to add many of
-social service links, an example's list could be:
+Service Links provide an amount of 70+ social services
+from around the World where submit the link of a given content;
+below a short list:
 
 * del.icio.us
 * Digg
@@ -31,11 +32,6 @@ social service links, an example's list could be:
 * Yahoo
 * ...
 
-And there are a lot more from around the World!
-
-Through plugin service links support too:
-* Favorite bookmark - it work for IE and Firefox
-
 The admin can decide:
 - To show the links as text, image or both.
 - To show only for certain node types or some categories
@@ -50,10 +46,11 @@ The admin can decide:
 - a block with Fisheye effect
 - a block for not-node pages
 - support for other Drupal modules: Forward, Views, Short Url, Sharethis, Share
-- support for browser bookmark
+- support for browser bookmark (Chrome, Firefox, IE, Opera)
 - auto-hide for unpublished nodes (configurable)
 - configurable label for the block shown in the node
 - params can be stick to the url address
+- custom icon's path
 
 And plus, the support for aggregator2 has been removed (obsolete) but it work
 well with aggregation
@@ -109,14 +106,23 @@ supported:
 3) Enable the module under admin >> modules page and under settings >> service links >> services
   complete the job!
 
-Include service links in your theme:
------------------------------------
-In the included template.php file there are examples about how to insert
-service links into a PHPTemplate theme. Remember to place the
+Theme's customizations
+----------------------
+In the included template.php file there are examples about how to create
+a PHPTemplate variable for your theme. Remember to place the
 template.php file in the folder of your theme or integrate it with
 the content of 'template.php' provided by your theme.
 
+Themeable functions that could be useful to overwrite:
+
+- service_links_node_format($links, $label):
+  
+  Get the links to print into the node and return a themed string.
+
+- service_links_block_format($items, $style)
+
+  Get the items to print into a block (node and not-node pages)
+  and return a themed string.
 
 Last updated:
 ------------
-$Id: README.txt,v 1.11.4.5 2010/09/28 14:24:45 thecrow Exp $

@@ -13,33 +13,61 @@
 
 function auto_index_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
 
-  // Only index if the search module is activated.
-  if (module_exists('search')) {
+	switch ($op) {
+		case "delete" :
 
-    switch ($op) {
-      case "delete" :
+			// Update search totals to reflect deleted node content.
+			search_update_totals();
+			break;
 
-        // Update search totals to reflect deleted node content.
-        search_update_totals();
-        break;
+		case "update" :
+		case "insert" :
 
-      case "update" :
-      case "insert" :
+			_auto_index_index_node($node);
+			break;
+	}
+}
 
-        // Ensure we force the cache to be updated so latest content is indexed.
-        $node_obj = node_load(
+function auto_index_comment($a1, $op) {
+	switch ($op) {
+		
+		// Reindex the node when comments are added or changed
+		case 'insert':
+		case 'update':
+		case 'delete':
+		case 'publish':
+		case 'unpublish':
+			
+			_auto_index_index_node($a1);
+			break;
+	}
+}
 
-          $node->nid,  // The node id.
-          NULL,        // Default to current version.
-          TRUE         // Flag that the cache should be updated to ensure the latest content is indexed.
-        );
+function _auto_index_index_node(&$node) {
+	
+	// Static variable to keep track of any node ids already indexed.
+	static $indexed_nodes = array();
 
-        // Do the indexing of this node only.
-        _node_index_node($node_obj);
-
-        // Update search totals.
-        search_update_totals();
-        break;
-    }
-  }
+	// Extract the node ID
+	$node_id = is_array($node) ? $node['nid'] : $node->nid;
+	
+	// Check if the node ID has already been indexed.
+	if (array_search($node_id, $indexed_nodes) === false) {
+		
+		// Ensure we force the cache to be updated so latest content is indexed.
+		$node_obj = node_load(
+			$node_id,  		// The node id.
+			NULL,					// Default to current version.
+			TRUE					// Flag that the cache should be updated to ensure the latest content is indexed.
+		);
+	
+		// Do the indexing of this node only.
+		_node_index_node($node_obj);
+	
+		// Update search totals.
+		search_update_totals();
+		
+		// Append to array to ensure node only indexed once per action.
+		$indexed_nodes[] = $node_id;
+	}
 }
