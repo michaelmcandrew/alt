@@ -4,16 +4,17 @@ Drupal.behaviors.eu_cookie_compliance_popup = function(context) {
       var enabled = Drupal.settings.eu_cookie_compliance.popup_enabled;
       if(!enabled) {
         return;
-      }    
+      }
       if (!Drupal.eu_cookie_compliance.cookiesEnabled()) {
         return;
-      }    
+      }
       var status = Drupal.eu_cookie_compliance.getCurrentStatus();
       var clicking_confirms = Drupal.settings.eu_cookie_compliance.popup_clicking_confirmation;
       var agreed_enabled = Drupal.settings.eu_cookie_compliance.popup_agreed_enabled;
+      var popup_hide_agreed = Drupal.settings.eu_cookie_compliance.popup_hide_agreed;
       if (status == 0) {
         var next_status = 1;
-        if (clicking_confirms) {	  
+        if (clicking_confirms) {
           $('a, input[type=submit]').bind('click.eu_cookie_compliance', function(){
             if(!agreed_enabled) {
               Drupal.eu_cookie_compliance.setStatus(1);
@@ -21,7 +22,8 @@ Drupal.behaviors.eu_cookie_compliance_popup = function(context) {
             }
             Drupal.eu_cookie_compliance.changeStatus(next_status);
           });
-        }   
+        }
+
         $('.agree-button').click(function(){
           if(!agreed_enabled) {
             Drupal.eu_cookie_compliance.setStatus(1);
@@ -30,10 +32,15 @@ Drupal.behaviors.eu_cookie_compliance_popup = function(context) {
           Drupal.eu_cookie_compliance.changeStatus(next_status);
         });
 
-
         Drupal.eu_cookie_compliance.createPopup(Drupal.settings.eu_cookie_compliance.popup_html_info);
       } else if(status == 1) {
         Drupal.eu_cookie_compliance.createPopup(Drupal.settings.eu_cookie_compliance.popup_html_agreed);
+        if (popup_hide_agreed) {
+          $('a, input[type=submit]').bind('click.eu_cookie_compliance_hideagreed', function(){
+            Drupal.eu_cookie_compliance.changeStatus(2);
+          });
+        }
+
       } else {
         return;
       }
@@ -65,7 +72,7 @@ Drupal.eu_cookie_compliance.createPopup = function(html) {
     popup.show()
       .attr({"class": "sliding-popup-bottom"})
       .css({"bottom": -1 * height})
-      .animate({bottom: 0}, Drupal.settings.eu_cookie_compliance.popup_delay)
+      .animate({bottom: 0}, Drupal.settings.eu_cookie_compliance.popup_delay);
   }
   Drupal.eu_cookie_compliance.attachEvents();
 }
@@ -131,7 +138,7 @@ Drupal.eu_cookie_compliance.changeStatus = function(value) {
       }
     ;})
   }
-  Drupal.eu_cookie_compliance.setStatus(value);  
+  Drupal.eu_cookie_compliance.setStatus(value);
 }
 
 Drupal.eu_cookie_compliance.setStatus = function(status) {
@@ -150,7 +157,7 @@ Drupal.eu_cookie_compliance.hasAgreed = function() {
 
 Drupal.eu_cookie_compliance.cookiesEnabled = function() {
   var cookieEnabled = (navigator.cookieEnabled) ? true : false;
-    if (typeof navigator.cookieEnabled == "undefined" && !cookieEnabled) { 
+    if (typeof navigator.cookieEnabled == "undefined" && !cookieEnabled) {
       document.cookie="testcookie";
       cookieEnabled = (document.cookie.indexOf("testcookie") != -1) ? true : false;
    }
